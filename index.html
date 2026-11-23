@@ -826,7 +826,7 @@
       { title: "Demo Trial (One-Time)", days: 1, likes: "220", amount: 20, icon: SVG_ICONS.spark, badge: "TRIAL ₹20", isDemo: true },
       { title: "1 Day Trial", days: 1, likes: "220", amount: 25, icon: SVG_ICONS.bolt, badge: "" },
       { title: "Weekly Starter", days: 7, likes: "1,540", amount: 60, icon: SVG_ICONS.trend, badge: "" },
-      { title: "15 Days Booster", days: 15, likes: "3,300", amount: 120, icon: SVG_ICONS.rocket, badge: "POPULAR" },
+      { title: "15 Days Booster", days: 15, likes: "3,300", amount: 100, icon: SVG_ICONS.rocket, badge: "POPULAR" },
       { title: "Monthly Pro", days: 30, likes: "6,600", amount: 200, icon: SVG_ICONS.crown, badge: "BEST VALUE" },
       { title: "60 Days Elite", days: 60, likes: "13,200", amount: 350, icon: SVG_ICONS.diamond, badge: "" },
       { title: "120 Days Legend", days: 120, likes: "26,400", amount: 600, icon: SVG_ICONS.trophy, badge: "MAX" }
@@ -922,14 +922,12 @@
       }
 
       const msPerDay = 24 * 60 * 60 * 1000;
-      const daysSinceStart = Math.floor((todayMidnight - startObj) / msPerDay) + 1;
-      const completedDays = Math.min(plan.days, Math.max(0, daysSinceStart));
-      const isCompleted = daysSinceStart > plan.days || (plan.days === 1 && todayMidnight >= startObj && now.getHours() >= 12);
-      const effectiveDays = isCompleted ? plan.days : completedDays;
-      const deliveredLikes = effectiveDays * 220;
-      const percent = Math.min(100, Math.round((effectiveDays / plan.days) * 100));
+      const elapsedMs = Math.max(0, now - startObj);
+      const totalPlanMs = plan.days * msPerDay;
+      const exactDaysElapsed = elapsedMs / msPerDay;
+      const currentDayNumber = Math.min(plan.days, Math.max(1, Math.floor(exactDaysElapsed) + 1));
 
-      if (isCompleted || percent >= 100) {
+      if (elapsedMs >= totalPlanMs) {
         return {
           statusLabel: "COMPLETED • 100%",
           badgeClass: "completed",
@@ -941,11 +939,15 @@
         };
       }
 
+      const rawPercent = (elapsedMs / totalPlanMs) * 100;
+      const percent = Math.max(0.1, Math.min(99.9, Number(rawPercent.toFixed(1))));
+      const deliveredLikes = Math.min(totalLikes, Math.round((elapsedMs / totalPlanMs) * totalLikes));
+
       return {
-        statusLabel: `ACTIVE • DAY ${effectiveDays}/${plan.days}`,
+        statusLabel: `ACTIVE • DAY ${currentDayNumber}/${plan.days} (${percent}%)`,
         badgeClass: "successful",
         percent,
-        completedDays: effectiveDays,
+        completedDays: currentDayNumber,
         deliveredLikes,
         totalLikes,
         rightText: `${deliveredLikes.toLocaleString()} / ${totalLikes.toLocaleString()} Likes`
@@ -1230,6 +1232,13 @@ ${toBold("I WANT TO BUY MAX FF AUTOLIKES:")}
       const dmUrl = `https://t.me/${ADMIN_USERNAME}?text=${encodeURIComponent(orderText)}`;
       tg.openTelegramLink(dmUrl);
     }
+
+    setInterval(() => {
+      const plansTab = document.getElementById('tab-plans');
+      if (plansTab && plansTab.classList.contains('active')) {
+        renderMyPlans();
+      }
+    }, 30000);
   </script>
 </body>
 </html>
