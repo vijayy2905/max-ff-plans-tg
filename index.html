@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>MAX FF LIKES — Store</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -307,6 +307,7 @@ select option {background:#111320;color:#fff}
   border-top:1px solid rgba(255,255,255,.14);
   border-top-left-radius:26px;border-top-right-radius:26px;
   padding:14px 18px 28px;
+  max-height:92vh;overflow-y:auto;
   animation:slideUp .25s cubic-bezier(.16,1,.3,1);
 }
 @keyframes slideUp {from{transform:translateY(100%)}to{transform:translateY(0)}}
@@ -342,6 +343,94 @@ select option {background:#111320;color:#fff}
   display:flex;align-items:center;justify-content:center;gap:8px;
 }
 .dm-btn:active {transform:scale(.985)}
+
+/* UPI CHECKOUT SHEET STYLES */
+.upi-top-card {
+  background:linear-gradient(135deg,rgba(157,78,221,.16),rgba(255,42,133,.1));
+  border:1px solid rgba(157,78,221,.35);
+  border-radius:16px;padding:12px 14px;
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:14px;
+}
+.upi-amt-label {font-size:10px;color:var(--muted);font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.upi-amt-val {font-size:26px;font-weight:900;color:#fbbf24;line-height:1.15;margin-top:2px}
+.upi-timer-badge {
+  background:rgba(245,158,11,.15);
+  border:1px solid rgba(245,158,11,.4);
+  color:#fbbf24;font-size:12px;font-weight:800;
+  padding:6px 11px;border-radius:999px;
+  font-variant-numeric:tabular-nums;
+}
+.qr-center-box {
+  background:#ffffff;
+  padding:12px;
+  border-radius:18px;
+  width:fit-content;
+  margin:0 auto 12px;
+  box-shadow:0 0 24px rgba(0,245,212,.22);
+}
+.vpa-copy-row {
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  background:#07080f;border:1px dashed rgba(0,245,212,.35);
+  border-radius:12px;padding:9px 12px;margin-bottom:12px;
+}
+.vpa-copy-row span {
+  font-size:11.5px;font-weight:700;color:#e2e8f0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.vpa-copy-btn {
+  background:rgba(0,245,212,.16);color:var(--cyan);
+  border:none;border-radius:8px;padding:5px 10px;
+  font-size:10.5px;font-weight:800;cursor:pointer;flex-shrink:0;
+}
+.upi-app-btn {
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  width:100%;background:linear-gradient(135deg,#00f5d4,#10b981);
+  color:#04130e;text-decoration:none;border:none;
+  border-radius:14px;padding:13px;font-size:14.5px;font-weight:900;
+  margin-bottom:14px;cursor:pointer;
+}
+.utr-verify-section {
+  border-top:1px solid rgba(255,255,255,.08);
+  padding-top:13px;
+}
+.utr-verify-section label {
+  display:block;font-size:10.5px;font-weight:800;
+  color:var(--cyan);letter-spacing:.05em;margin-bottom:7px;
+}
+.utr-input-field {
+  width:100%;background:#07080f;
+  border:1px solid rgba(157,78,221,.4);
+  border-radius:12px;padding:12px 13px;
+  color:#fff;font-size:15px;font-weight:800;
+  letter-spacing:1.2px;outline:none;margin-bottom:10px;
+}
+.utr-input-field:focus {border-color:var(--cyan)}
+.upi-action-grid {
+  display:grid;grid-template-columns:1fr 1.6fr;gap:9px;
+}
+.reject-btn {
+  background:rgba(239,68,68,.14);
+  border:1px solid rgba(239,68,68,.45);
+  color:#f87171;border-radius:14px;padding:13px 10px;
+  font-size:13px;font-weight:800;cursor:pointer;
+}
+.verify-pay-btn {
+  background:linear-gradient(135deg,#9d4edd,#ff2a85);
+  border:none;color:#fff;border-radius:14px;padding:13px 12px;
+  font-size:13.5px;font-weight:900;cursor:pointer;
+}
+.rejected-screen {
+  text-align:center;padding:24px 10px 12px;
+}
+.rejected-icon {
+  width:56px;height:56px;border-radius:50%;
+  background:rgba(239,68,68,.16);
+  border:1px solid rgba(239,68,68,.45);
+  color:#f87171;font-size:26px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 12px;
+}
 .toast {
   position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
   background:#171a2b;border:1px solid rgba(0,245,212,.45);
@@ -460,6 +549,7 @@ select option {background:#111320;color:#fff}
   </div>
 </div>
 
+<!-- CONFIRM ORDER MODAL -->
 <div class="modal-backdrop" id="checkoutModal" onclick="handleBackdropClick(event)">
   <div class="bottom-sheet">
     <div class="drag-pill"></div>
@@ -478,13 +568,68 @@ select option {background:#111320;color:#fff}
       <div class="receipt-row"><span>Payment</span><strong id="recPayment"></strong></div>
       <div class="receipt-row total"><span>Total Payable</span><strong id="recPrice"></strong></div>
     </div>
-    <p style="text-align:center;font-size:11px;color:var(--muted);margin-bottom:14px;">
+    <p id="confirmHintText" style="text-align:center;font-size:11px;color:var(--muted);margin-bottom:14px;">
       Tap below to open DM with <b>@vijxzz</b>. Your order will stay <b>Pending</b> until verified by Admin.
     </p>
-    <button class="dm-btn" onclick="proceedToDM()">
+    <button class="dm-btn" id="confirmActionBtn" onclick="handleConfirmAction()">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-      Buy Now via @vijxzz
+      <span id="confirmBtnLabel">Buy Now via @vijxzz</span>
     </button>
+  </div>
+</div>
+
+<!-- UPI PAYMENT CHECKOUT MODAL -->
+<div class="modal-backdrop" id="upiCheckoutModal">
+  <div class="bottom-sheet">
+    <div class="drag-pill"></div>
+
+    <div id="upiActiveView">
+      <div class="sheet-header">
+        <div>
+          <h2>UPI Checkout 🇮🇳</h2>
+          <div class="sheet-sub" id="upiOrderMeta">Order #FF000000</div>
+        </div>
+        <button class="close-modal" onclick="rejectUpiPayment('Payment cancelled by buyer')">✕</button>
+      </div>
+
+      <div class="upi-top-card">
+        <div>
+          <div class="upi-amt-label">Pay Exact Amount</div>
+          <div class="upi-amt-val" id="upiPayAmount">₹25</div>
+        </div>
+        <div class="upi-timer-badge" id="upiTimerBadge">10:00</div>
+      </div>
+
+      <div class="qr-center-box">
+        <div id="upiQrBox"></div>
+      </div>
+
+      <div class="vpa-copy-row">
+        <span id="upiVpaText">BHARATPE2G0X0Q9E3W28242@unitype</span>
+        <button class="vpa-copy-btn" id="upiCopyBtn" onclick="copyMerchantUpi()">COPY UPI</button>
+      </div>
+
+      <a id="directUpiAppBtn" class="upi-app-btn" href="#">
+        Pay ₹25 with UPI App ⚡
+      </a>
+
+      <div class="utr-verify-section">
+        <label>ENTER 12-DIGIT UPI UTR / REF NO. AFTER PAYMENT</label>
+        <input type="tel" maxlength="12" id="upiUtrField" class="utr-input-field" placeholder="e.g. 432910482910" oninput="sanitizeUtrInput()">
+        <div class="upi-action-grid">
+          <button class="reject-btn" onclick="rejectUpiPayment('Payment rejected')">✕ Reject</button>
+          <button class="verify-pay-btn" onclick="verifyAndSuccessUpi()">✓ Confirm Paid</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="upiRejectedView" class="rejected-screen" style="display:none;">
+      <div class="rejected-icon">✕</div>
+      <h3 style="font-size:18px;font-weight:900;color:#f87171;margin-bottom:6px;">Payment Rejected</h3>
+      <p id="upiRejectedReason" style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:16px;">
+        Payment was not completed. Returning to Store...
+      </p>
+    </div>
   </div>
 </div>
 
@@ -493,6 +638,8 @@ select option {background:#111320;color:#fff}
 <script>
 const ADMIN_USERNAME="vijxzz";
 const BOT_USERNAME="@maxfflikes_bot";
+const MERCHANT_UPI_ID="BHARATPE2G0X0Q9E3W28242@unitype";
+const MERCHANT_UPI_NAME="Max Digital Store";
 
 const SVG_ICONS={
   spark:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>`,
@@ -541,7 +688,7 @@ function showToast(msg){
  box.textContent=msg;
  box.classList.add("show");
  clearTimeout(toastTimer);
- toastTimer=setTimeout(()=>box.classList.remove("show"),2500);
+ toastTimer=setTimeout(()=>box.classList.remove("show"),2800);
 }
 
 function getDemoUsedIds(){
@@ -558,7 +705,7 @@ function isDemoLocked(){
  if(localStorage.getItem("maxff_demo_claimed")==="1")return true;
  const uidKey=String(buyer.id);
  if(uidKey&&uidKey!=="Unknown"&&getDemoUsedIds().includes(uidKey))return true;
- return getOrders().some(o=>o.isDemo||(o.title&&o.title.toLowerCase().includes("demo")));
+ return getOrders().some(o=>o.status!=="failed"&&(o.isDemo||(o.title&&o.title.toLowerCase().includes("demo"))));
 }
 
 function markDemoUsed(){
@@ -791,7 +938,7 @@ function renderOrders(){
    </div>
    <div class="order-meta">
     <span>Server: ${o.server}</span>
-    <span>${o.payment}</span>
+    <span>${o.payment}${o.utr?` • UTR: ${o.utr}`:""}</span>
    </div>
    ${(isAdmin&&o.status==="pending")?`
     <div class="order-actions">
@@ -820,7 +967,6 @@ function renderMyPlans(){
  plansEl.innerHTML=activePlans.map(p=>{
   const prog=getPlanProgress(p);
 
-  /* FIX: valid colours, no undefined --primary */
   const barGradient=prog.percent>=100
    ?"linear-gradient(90deg,#10b981,#00f5d4)"
    :"linear-gradient(90deg,#00f5d4,#9d4edd,#ff2a85)";
@@ -851,6 +997,8 @@ function renderMyPlans(){
 }
 
 let activePackage=null;
+let pendingUpiSession=null;
+let upiCountdownInterval=null;
 
 function openCheckout(idx){
  const pkg=PACKAGES[idx];
@@ -861,6 +1009,7 @@ function openCheckout(idx){
  }
 
  activePackage=pkg;
+ const mode=document.getElementById("paymentSelect").value;
  const server=document.getElementById("serverSelect").value;
  const paymentLabel=getPaymentLabel();
  const formattedPrice=formatPrice(activePackage.amount);
@@ -870,6 +1019,15 @@ function openCheckout(idx){
  document.getElementById("recServer").innerText=server;
  document.getElementById("recPayment").innerText=paymentLabel;
  document.getElementById("recPrice").innerText=formattedPrice;
+
+ if(mode==="STARS"){
+  document.getElementById("confirmHintText").innerHTML=`Tap below to open DM with <b>@vijxzz</b>. Send Telegram Stars &amp; wait for Admin confirmation.`;
+  document.getElementById("confirmBtnLabel").innerText=`Buy Now via @vijxzz`;
+ }else{
+  document.getElementById("confirmHintText").innerHTML=`Tap below to open <b>UPI Payment Checkout</b>. DM approval link unlocks only after payment success.`;
+  document.getElementById("confirmBtnLabel").innerText=`Proceed to Pay ₹${activePackage.amount}`;
+ }
+
  document.getElementById("checkoutModal").classList.add("show");
 }
 
@@ -881,7 +1039,17 @@ function handleBackdropClick(e){
  if(e.target.id==="checkoutModal")closeCheckout();
 }
 
-function proceedToDM(){
+function handleConfirmAction(){
+ const mode=document.getElementById("paymentSelect").value;
+ if(mode==="STARS"){
+  proceedToDM();
+ }else{
+  openUpiCheckout();
+ }
+}
+
+/* STARS DIRECT DM FLOW (UNCHANGED) */
+function proceedToDM(verifiedUtr=""){
  if(!activePackage)return;
 
  if(activePackage.isDemo&&isDemoLocked()){
@@ -895,7 +1063,7 @@ function proceedToDM(){
  const formattedPrice=formatPrice(activePackage.amount);
  const now=new Date();
  const timeStr=now.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
- const orderId="FF"+Math.floor(100000+Math.random()*900000);
+ const orderId=(pendingUpiSession&&pendingUpiSession.orderId)?pendingUpiSession.orderId:("FF"+Math.floor(100000+Math.random()*900000));
  const nextDay=getNextDayString(1);
 
  const orders=getOrders();
@@ -909,6 +1077,7 @@ function proceedToDM(){
   price:formattedPrice,
   server:server,
   payment:paymentLabel,
+  utr:verifiedUtr,
   status:"pending",
   startDate:nextDay,
   date:now.toLocaleDateString([],{month:"short",day:"numeric"})+" "+timeStr
@@ -921,6 +1090,7 @@ function proceedToDM(){
  closeCheckout();
 
  const adminCmd=`/approve ${buyer.id} ${activePackage.days} ${orderId}`;
+ const utrLine=verifiedUtr?`\n🔢 ${toBold("UTR NO:")} ${toBold(verifiedUtr)}`:"";
 
  const orderText=`❤️‍🔥 ${toBold("HELLO")} @${ADMIN_USERNAME} 👋
 
@@ -933,15 +1103,160 @@ ${toBold("I WANT TO BUY MAX FF AUTOLIKES:")}
 📅 ${toBold("STARTS:")} ${toBold(nextDay)} (Next Day)
 💰 ${toBold("PRICE:")} ${toBold(formattedPrice)}
 🌍 ${toBold("SERVER:")} ${toBold(server)}
-💳 ${toBold("PAYMENT:")} ${toBold(paymentLabel)}
+💳 ${toBold("PAYMENT:")} ${toBold(paymentLabel)}${utrLine}
 🤖 ${toBold("BOT:")} ${BOT_USERNAME}
 ⏰ ${toBold("TIME:")} ${toBold(timeStr)}
 
 ⚡ ${toBold("ADMIN COMMAND:")}
 \`${adminCmd}\``;
 
+ pendingUpiSession=null;
  const dmUrl=`https://t.me/${ADMIN_USERNAME}?text=${encodeURIComponent(orderText)}`;
  tg.openTelegramLink(dmUrl);
+}
+
+/* UPI CHECKOUT FLOW */
+function openUpiCheckout(){
+ if(!activePackage)return;
+ closeCheckout();
+
+ const orderId="FF"+Math.floor(100000+Math.random()*900000);
+ const amountFixed=Number(activePackage.amount).toFixed(2);
+ const server=document.getElementById("serverSelect").value;
+
+ pendingUpiSession={
+  orderId,
+  amount:activePackage.amount,
+  server
+ };
+
+ document.getElementById("upiActiveView").style.display="block";
+ document.getElementById("upiRejectedView").style.display="none";
+ document.getElementById("upiOrderMeta").innerText=`Order #${orderId} • ${activePackage.title}`;
+ document.getElementById("upiPayAmount").innerText=`₹${activePackage.amount}`;
+ document.getElementById("directUpiAppBtn").innerText=`Pay ₹${activePackage.amount} with UPI App ⚡`;
+ document.getElementById("upiUtrField").value="";
+
+ const upiUri=`upi://pay?pa=${MERCHANT_UPI_ID}&pn=${encodeURIComponent(MERCHANT_UPI_NAME)}&tr=${orderId}&tn=${orderId}&am=${amountFixed}&cu=INR`;
+ document.getElementById("directUpiAppBtn").href=upiUri;
+
+ const qrContainer=document.getElementById("upiQrBox");
+ qrContainer.innerHTML="";
+ new QRCode(qrContainer,{
+  text:upiUri,
+  width:175,
+  height:175,
+  colorDark:"#07080f",
+  colorLight:"#ffffff"
+ });
+
+ clearInterval(upiCountdownInterval);
+ let remaining=600;
+ document.getElementById("upiTimerBadge").innerText="10:00";
+ upiCountdownInterval=setInterval(()=>{
+  remaining--;
+  if(remaining<=0){
+   clearInterval(upiCountdownInterval);
+   rejectUpiPayment("Payment session expired (10:00 timeout)");
+   return;
+  }
+  const mm=String(Math.floor(remaining/60)).padStart(2,"0");
+  const ss=String(remaining%60).padStart(2,"0");
+  document.getElementById("upiTimerBadge").innerText=`${mm}:${ss}`;
+ },1000);
+
+ document.getElementById("upiCheckoutModal").classList.add("show");
+}
+
+function copyMerchantUpi(){
+ navigator.clipboard.writeText(MERCHANT_UPI_ID);
+ const btn=document.getElementById("upiCopyBtn");
+ btn.innerText="COPIED!";
+ if(tg.HapticFeedback)tg.HapticFeedback.notificationOccurred("success");
+ setTimeout(()=>btn.innerText="COPY UPI",2000);
+}
+
+function sanitizeUtrInput(){
+ const el=document.getElementById("upiUtrField");
+ el.value=el.value.replace(/\D/g,"").slice(0,12);
+}
+
+function getUsedUtrs(){
+ try{return JSON.parse(localStorage.getItem("maxff_used_utrs")||"[]")}
+ catch(e){return []}
+}
+
+function saveUsedUtr(utr){
+ const list=getUsedUtrs();
+ if(!list.includes(utr)){
+  list.push(utr);
+  localStorage.setItem("maxff_used_utrs",JSON.stringify(list));
+ }
+}
+
+function verifyAndSuccessUpi(){
+ if(!activePackage||!pendingUpiSession)return;
+
+ const utr=document.getElementById("upiUtrField").value.trim();
+
+ if(!/^\d{12}$/.test(utr)){
+  if(tg.HapticFeedback)tg.HapticFeedback.notificationOccurred("error");
+  showToast("⚠️ Enter valid 12-digit UPI UTR number!");
+  return;
+ }
+
+ if(getUsedUtrs().includes(utr)){
+  if(tg.HapticFeedback)tg.HapticFeedback.notificationOccurred("error");
+  rejectUpiPayment("Duplicate UTR detected! Payment rejected.");
+  return;
+ }
+
+ clearInterval(upiCountdownInterval);
+ saveUsedUtr(utr);
+ document.getElementById("upiCheckoutModal").classList.remove("show");
+
+ if(tg.HapticFeedback)tg.HapticFeedback.notificationOccurred("success");
+ showToast("✅ Payment Verified! Opening DM...");
+
+ proceedToDM(utr);
+}
+
+function rejectUpiPayment(reasonText="Payment rejected"){
+ clearInterval(upiCountdownInterval);
+ if(tg.HapticFeedback)tg.HapticFeedback.notificationOccurred("error");
+
+ if(activePackage&&pendingUpiSession){
+  const now=new Date();
+  const timeStr=now.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+  const orders=getOrders();
+  orders.unshift({
+   id:pendingUpiSession.orderId,
+   isDemo:false,
+   title:activePackage.title,
+   days:activePackage.days,
+   likes:activePackage.likes,
+   price:`₹${activePackage.amount}`,
+   server:pendingUpiSession.server,
+   payment:"UPI (IND 🇮🇳)",
+   status:"failed",
+   startDate:getNextDayString(1),
+   date:now.toLocaleDateString([],{month:"short",day:"numeric"})+" "+timeStr
+  });
+  saveOrders(orders);
+ }
+
+ pendingUpiSession=null;
+
+ document.getElementById("upiActiveView").style.display="none";
+ document.getElementById("upiRejectedView").style.display="block";
+ document.getElementById("upiRejectedReason").innerText=`${reasonText}. Returning to main Store page...`;
+
+ setTimeout(()=>{
+  document.getElementById("upiCheckoutModal").classList.remove("show");
+  const storeTabBtn=document.querySelectorAll(".tab-btn")[0];
+  switchTab("store",storeTabBtn);
+  showToast("❌ Payment Rejected!");
+ },1500);
 }
 
 /* Automatically refresh progress every 30 seconds */
