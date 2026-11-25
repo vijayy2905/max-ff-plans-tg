@@ -277,7 +277,7 @@ select option {background:#111320;color:#fff}
   padding:14px 15px;margin-bottom:11px;
 }
 .order-top {display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.order-id {font-size:11px;color:var(--muted);font-weight:700;font-family:monospace}
+.order-id {font-size:11.5px;color:var(--cyan);font-weight:800;font-family:monospace}
 .badge {
   font-size:9.5px;font-weight:800;padding:3px 9px;
   border-radius:999px;text-transform:uppercase;letter-spacing:.04em;
@@ -303,6 +303,7 @@ select option {background:#111320;color:#fff}
   font-weight:800;border:1px solid var(--border);
   background:var(--bg);color:var(--text);cursor:pointer;
 }
+.mini-btn.dm {border-color:rgba(0,245,212,.45);color:var(--cyan)}
 .mini-btn.ok {border-color:rgba(16,185,129,.45);color:#34d399}
 .mini-btn.fail {border-color:rgba(239,68,68,.45);color:#f87171}
 
@@ -667,7 +668,7 @@ select option {background:#111320;color:#fff}
 
   <div id="tab-plans" class="tab-panel">
     <div class="section-label">
-      <span>Active Subscriptions</span><b>Starts Next Day</b>
+      <span>My Plans</span><b>Starts Next Day</b>
     </div>
     <div id="myPlansContainer"></div>
   </div>
@@ -837,12 +838,12 @@ select option {background:#111320;color:#fff}
         </svg>
       </div>
       <h3 style="font-size:20px;font-weight:900;color:#34d399;margin-bottom:6px;">Payment Successful!</h3>
-      <p id="upiSuccessSummary" style="font-size:12.5px;color:#e2e8f0;line-height:1.5;margin-bottom:6px;">
+      <p id="upiSuccessSummary" style="font-size:12.5px;color:#e2e8f0;line-height:1.5;margin-bottom:12px;">
         Verified via FamPay UPI
       </p>
-      <p id="upiSuccessNextHint" style="font-size:11.5px;color:var(--cyan);font-weight:700;">
-        Opening @vijxzz DM with approval command...
-      </p>
+      <button class="dm-btn" id="manualDmOpenBtn" onclick="openSavedOrderDm()">
+        Send Order Prompt to @vijxzz ⚡
+      </button>
     </div>
 
     <!-- PAYMENT REJECTED VIEW -->
@@ -938,7 +939,24 @@ function showToast(msg){
  box.textContent=msg;
  box.classList.add("show");
  clearTimeout(toastTimer);
- toastTimer=setTimeout(()=>box.classList.remove("show"),2800);
+ toastTimer=setTimeout(()=>box.classList.remove("show"),3000);
+}
+
+function toBold(str){
+ const normal="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+ const bold="𝗔𝗕𝗖𝗗𝗘𝗙𝗚𝗛𝗜𝗝𝗞𝗟𝗠𝗡𝗢𝗣𝗤𝗥𝗦𝗧𝗨𝗩𝗪𝗫𝗬𝗭𝗮𝗯𝗰𝗱𝗲𝗳𝗴𝗵𝗶𝗷𝗸𝗹𝗺𝗻𝗼𝗽𝗾𝗿𝘀𝘁𝘂𝘃𝘄𝘅𝘆𝘇𝟬𝟭𝟮𝟯𝟰𝟱𝟲𝟳𝟴𝟵";
+ return String(str).split("").map(ch=>{
+  const idx=normal.indexOf(ch);
+  return idx!==-1?[...bold][idx]:ch;
+ }).join("");
+}
+
+function normalizeFfOrderId(rawId){
+ const clean=String(rawId||"").trim().toUpperCase().replace(/^#/,"");
+ if(/^FF\d{6,}$/.test(clean))return clean;
+ const digits=clean.replace(/\D/g,"");
+ if(digits.length>=6)return "FF"+digits.slice(-6);
+ return "FF"+Math.floor(100000+Math.random()*900000);
 }
 
 function getDemoUsedIds(){
@@ -986,9 +1004,22 @@ function parseDMY(dateStr){
 }
 
 function getPlanProgress(plan){
+ const totalLikes=plan.days*220;
+
+ if(plan.status==="pending"){
+  return {
+   statusLabel:"PENDING APPROVAL",
+   badgeClass:"pending",
+   percent:5,
+   completedDays:0,
+   deliveredLikes:0,
+   totalLikes,
+   rightText:`Waiting Admin • Starts ${plan.startDate||getNextDayString(1)}`
+  };
+ }
+
  const startObj=parseDMY(plan.startDate);
  const now=new Date();
- const totalLikes=plan.days*220;
 
  if(!startObj){
   return {
@@ -1117,9 +1148,10 @@ function checkActivationLink(){
  if(startParam){
   const cleanId=startParam.replace("#","").trim().toUpperCase();
   const orders=getOrders();
-  const idx=orders.findIndex(o=>o.id.toUpperCase()===cleanId);
+  const idx=orders.findIndex(o=>normalizeFfOrderId(o.id)===cleanId);
 
   if(idx!==-1&&orders[idx].status==="pending"){
+   orders[idx].id=cleanId;
    orders[idx].status="successful";
    orders[idx].approvedAt=Date.now();
    orders[idx].startDate=getNextDayString(1);
@@ -1138,6 +1170,7 @@ function updateOrderStatus(orderId,newStatus){
  const idx=orders.findIndex(o=>o.id===orderId);
 
  if(idx!==-1){
+  orders[idx].id=normalizeFfOrderId(orders[idx].id);
   orders[idx].status=newStatus;
   if(newStatus==="successful"){
    orders[idx].approvedAt=Date.now();
@@ -1147,6 +1180,60 @@ function updateOrderStatus(orderId,newStatus){
   saveOrders(orders);
   renderOrders();
   renderMyPlans();
+ }
+}
+
+/* BUILD EXACT SCREENSHOT DM PROMPT */
+function buildOrderDmText(order){
+ const ffId=normalizeFfOrderId(order.id);
+ const adminCmd=`/approve ${buyer.id} ${order.days} ${ffId}`;
+ const timeOnly=order.timeOnly||(order.date?order.date.split(" ").slice(-2).join(" "):new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}));
+
+ return `❤️‍🔥 ${toBold("HELLO")} @${ADMIN_USERNAME} 👋
+
+${toBold("I WANT TO BUY MAX FF AUTOLIKES:")}
+
+🧾 ${toBold("ORDER ID:")} #${toBold(ffId)}
+👤 ${toBold("NAME:")} ${toBold(buyer.name)} (${buyer.username})
+🆔 ${toBold("TG ID:")} ${toBold(buyer.id)}
+📦 ${toBold("PLAN:")} ${toBold(order.days+" "+(order.days===1?"Day":"Days"))} — ${toBold(order.likes+" Likes")} (220/Day)
+📅 ${toBold("STARTS:")} ${toBold(order.startDate)} (Next Day)
+💰 ${toBold("PRICE:")} ${toBold(order.price)}
+🌍 ${toBold("SERVER:")} ${toBold(order.server)}
+💳 ${toBold("PAYMENT:")} ${toBold(order.payment)}
+🤖 ${toBold("BOT:")} ${BOT_USERNAME}
+⏰ ${toBold("TIME:")} ${toBold(timeOnly)}
+
+⚡ ${toBold("ADMIN COMMAND:")}
+${adminCmd}`;
+}
+
+function sendPromptToAdminDm(order){
+ const promptText=buildOrderDmText(order);
+ if(navigator.clipboard&&navigator.clipboard.writeText){
+  navigator.clipboard.writeText(promptText).catch(()=>{});
+ }
+ showToast("📋 Order prompt copied! Opening @vijxzz...");
+ const dmUrl=`https://t.me/${ADMIN_USERNAME}?text=${encodeURIComponent(promptText)}`;
+ if(tg&&tg.openTelegramLink){
+  tg.openTelegramLink(dmUrl);
+ }else{
+  window.location.href=dmUrl;
+ }
+}
+
+function openOrderDmById(orderId){
+ const orders=getOrders();
+ const found=orders.find(o=>normalizeFfOrderId(o.id)===normalizeFfOrderId(orderId));
+ if(found){
+  sendPromptToAdminDm(found);
+ }
+}
+
+let lastCreatedOrder=null;
+function openSavedOrderDm(){
+ if(lastCreatedOrder){
+  sendPromptToAdminDm(lastCreatedOrder);
  }
 }
 
@@ -1166,10 +1253,12 @@ function renderOrders(){
   return;
  }
 
- listEl.innerHTML=orders.map(o=>`
+ listEl.innerHTML=orders.map(o=>{
+  const ffId=normalizeFfOrderId(o.id);
+  return `
   <div class="order-card">
    <div class="order-top">
-    <span class="order-id">#${o.id} • ${o.date}</span>
+    <span class="order-id">#${ffId} • ${o.date}</span>
     <span class="badge ${o.status}">${o.status}</span>
    </div>
    <div class="order-mid">
@@ -1178,33 +1267,39 @@ function renderOrders(){
    </div>
    <div class="order-meta">
     <span>Server: ${o.server}</span>
-    <span>${o.payment}${o.utr?` • UTR: ${o.utr}`:""}</span>
+    <span>${o.payment}</span>
    </div>
-   ${(isAdmin&&o.status==="pending")?`
+   ${o.status==="pending"?`
     <div class="order-actions">
-     <button class="mini-btn ok" onclick="updateOrderStatus('${o.id}','successful')">✓ Approve (Admin)</button>
-     <button class="mini-btn fail" onclick="updateOrderStatus('${o.id}','failed')">✕ Reject (Admin)</button>
+     <button class="mini-btn dm" onclick="openOrderDmById('${ffId}')">📩 Open DM Prompt</button>
+     ${isAdmin?`
+      <button class="mini-btn ok" onclick="updateOrderStatus('${o.id}','successful')">✓ Approve</button>
+      <button class="mini-btn fail" onclick="updateOrderStatus('${o.id}','failed')">✕ Reject</button>
+     `:""}
     </div>`:""}
-  </div>`).join("");
+  </div>`;
+ }).join("");
 }
 
+/* MY PLANS — SHOWS FF ORDER ID ONLY (NO UTR) */
 function renderMyPlans(){
- const activePlans=getOrders().filter(o=>o.status==="successful");
+ const visiblePlans=getOrders().filter(o=>o.status==="successful"||o.status==="pending");
  const plansEl=document.getElementById("myPlansContainer");
 
- if(activePlans.length===0){
+ if(visiblePlans.length===0){
   plansEl.innerHTML=`
    <div class="empty-state">
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
     <h3>No Active Plan</h3>
-    <p>Once @vijxzz confirms your payment, your plan will appear here starting the next day.</p>
+    <p>Once you place an order, your plan &amp; FF Order ID will appear here.</p>
     <button class="action-pill-btn" onclick="document.querySelectorAll('.tab-btn')[0].click()">Get Auto Likes</button>
    </div>`;
   return;
  }
 
- plansEl.innerHTML=activePlans.map(p=>{
+ plansEl.innerHTML=visiblePlans.map(p=>{
   const prog=getPlanProgress(p);
+  const ffId=normalizeFfOrderId(p.id);
 
   const barGradient=prog.percent>=100
    ?"linear-gradient(90deg,#10b981,#00f5d4)"
@@ -1214,12 +1309,12 @@ function renderMyPlans(){
    <div class="active-plan-card">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
      <span class="badge ${prog.badgeClass}">${prog.statusLabel}</span>
-     <span style="font-size:11px;color:var(--muted);">Order #${p.id}</span>
+     <span style="font-size:11.5px;font-weight:800;color:var(--cyan);font-family:monospace;">Order #${ffId}</span>
     </div>
 
     <h3 style="font-size:17px;font-weight:800;margin-top:10px;">${p.title} — ${p.likes} Likes</h3>
 
-    <p style="font-size:12px;color:var(--cyan);margin-top:2px;">Server: ${p.server}</p>
+    <p style="font-size:12px;color:var(--cyan);margin-top:2px;">Server: ${p.server} • ${p.payment}</p>
 
     <div class="progress-bar-bg">
      <div class="progress-bar-fill"
@@ -1231,6 +1326,11 @@ function renderMyPlans(){
      <span>Duration: ${p.days} ${p.days===1?"Day":"Days"} (${prog.percent}%)</span>
      <span style="color:#fff;font-weight:600;text-align:right;">${prog.rightText}</span>
     </div>
+
+    ${p.status==="pending"?`
+     <div class="order-actions">
+      <button class="mini-btn dm" onclick="openOrderDmById('${ffId}')">📩 Send #${ffId} to @vijxzz</button>
+     </div>`:""}
    </div>`;
  }).join("");
 }
@@ -1378,7 +1478,7 @@ async function payWithWallet(){
 
   pendingUpiSession={orderId};
   btn.disabled=false;
-  proceedToDM("WALLET-PAID","Wallet Balance 💵");
+  proceedToDM("","Wallet Balance 💵");
  }catch(err){
   btn.disabled=false;
   label.innerText=`Pay ₹${activePackage.amount} from Wallet`;
@@ -1387,13 +1487,13 @@ async function payWithWallet(){
 }
 
 /* STARS, WALLET & VERIFIED UPI DM FLOW */
-function proceedToDM(verifiedUtr="",customPaymentLabel=""){
- if(!activePackage)return;
+function proceedToDM(verifiedUtr="",customPaymentLabel="",autoOpenDm=true){
+ if(!activePackage)return null;
 
  if(activePackage.isDemo&&isDemoLocked()){
   showToast("🔒 Demo Trial is strictly One-Time per user!");
   closeCheckout();
-  return;
+  return null;
  }
 
  const server=document.getElementById("serverSelect").value;
@@ -1401,12 +1501,10 @@ function proceedToDM(verifiedUtr="",customPaymentLabel=""){
  const formattedPrice=formatPrice(activePackage.amount);
  const now=new Date();
  const timeStr=now.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
- const orderId=(pendingUpiSession&&pendingUpiSession.orderId)?pendingUpiSession.orderId:("FF"+Math.floor(100000+Math.random()*900000));
+ const orderId=normalizeFfOrderId(pendingUpiSession&&pendingUpiSession.orderId);
  const nextDay=getNextDayString(1);
 
- const orders=getOrders();
-
- orders.unshift({
+ const newOrder={
   id:orderId,
   isDemo:!!activePackage.isDemo,
   title:activePackage.title,
@@ -1415,52 +1513,31 @@ function proceedToDM(verifiedUtr="",customPaymentLabel=""){
   price:formattedPrice,
   server:server,
   payment:paymentLabel,
-  utr:verifiedUtr,
   status:"pending",
   startDate:nextDay,
+  timeOnly:timeStr,
   date:now.toLocaleDateString([],{month:"short",day:"numeric"})+" "+timeStr
- });
+ };
 
+ const orders=getOrders();
+ orders.unshift(newOrder);
  saveOrders(orders);
+ lastCreatedOrder=newOrder;
 
  if(activePackage.isDemo)markDemoUsed();
 
  closeCheckout();
-
- const adminCmd=`/approve ${buyer.id} ${activePackage.days} ${orderId}`;
- const utrLine=verifiedUtr?`\nREF / UTR: ${verifiedUtr}`:"";
-
- const orderText=`HELLO @${ADMIN_USERNAME}
-
-I WANT TO BUY MAX FF AUTOLIKES:
-
-ORDER ID: #${orderId}
-NAME: ${buyer.name} (${buyer.username})
-TG ID: ${buyer.id}
-PLAN: ${activePackage.days} Days - ${activePackage.likes} Likes (220/Day)
-STARTS: ${nextDay} (Next Day)
-PRICE: ${formattedPrice}
-SERVER: ${server}
-PAYMENT: ${paymentLabel}${utrLine}
-BOT: ${BOT_USERNAME}
-TIME: ${timeStr}
-
-ADMIN COMMAND:
-${adminCmd}`;
-
- if(navigator.clipboard&&navigator.clipboard.writeText){
-  navigator.clipboard.writeText(orderText).catch(()=>{});
- }
-
  pendingUpiSession=null;
- const dmUrl=`https://t.me/${ADMIN_USERNAME}?text=${encodeURIComponent(orderText)}`;
- showToast("📋 Order copied! Opening @vijxzz...");
 
- if(tg&&tg.openTelegramLink){
-  tg.openTelegramLink(dmUrl);
- }else{
-  window.location.href=dmUrl;
+ const promptText=buildOrderDmText(newOrder);
+ if(navigator.clipboard&&navigator.clipboard.writeText){
+  navigator.clipboard.writeText(promptText).catch(()=>{});
  }
+
+ if(autoOpenDm){
+  sendPromptToAdminDm(newOrder);
+ }
+ return newOrder;
 }
 
 /* REAL-TIME CLOCK TIMER */
@@ -1715,7 +1792,7 @@ async function verifyAndSuccessUpi(){
      const credited=(typeof data.credited==="number")?data.credited:expectedAmt;
      setWalletBalanceUI(newBal);
      document.getElementById("upiSuccessSummary").innerText=`+₹${credited} Added • New Balance: ₹${newBal}`;
-     document.getElementById("upiSuccessNextHint").innerText="Wallet updated! Returning to Store...";
+     document.getElementById("manualDmOpenBtn").style.display="none";
      document.getElementById("upiSuccessView").style.display="block";
 
      setTimeout(()=>{
@@ -1724,14 +1801,15 @@ async function verifyAndSuccessUpi(){
       showToast(`✅ ₹${credited} Added to Wallet!`);
      },1600);
     }else{
-     document.getElementById("upiSuccessSummary").innerText=`₹${expectedAmt} Verified • UTR: ${utr}`;
-     document.getElementById("upiSuccessNextHint").innerText="Opening @vijxzz DM with approval command...";
+     const created=proceedToDM("","UPI (IND 🇮🇳)",false);
+     document.getElementById("upiSuccessSummary").innerText=`₹${expectedAmt} Verified • Order #${created.id}`;
+     document.getElementById("manualDmOpenBtn").style.display="flex";
      document.getElementById("upiSuccessView").style.display="block";
 
      setTimeout(()=>{
       document.getElementById("upiCheckoutModal").classList.remove("show");
-      proceedToDM(utr,"UPI (IND 🇮🇳)");
-     },1600);
+      sendPromptToAdminDm(created);
+     },1400);
     }
     return;
    }
@@ -1772,7 +1850,7 @@ function rejectUpiPayment(reasonText="Payment rejected"){
   const timeStr=now.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
   const orders=getOrders();
   orders.unshift({
-   id:pendingUpiSession.orderId,
+   id:normalizeFfOrderId(pendingUpiSession.orderId),
    isDemo:false,
    title:activePackage.title,
    days:activePackage.days,
@@ -1782,6 +1860,7 @@ function rejectUpiPayment(reasonText="Payment rejected"){
    payment:"UPI (IND 🇮🇳)",
    status:"failed",
    startDate:getNextDayString(1),
+   timeOnly:timeStr,
    date:now.toLocaleDateString([],{month:"short",day:"numeric"})+" "+timeStr
   });
   saveOrders(orders);
