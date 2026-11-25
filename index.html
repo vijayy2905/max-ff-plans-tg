@@ -41,7 +41,7 @@ body {
   min-height:100vh;
   overflow-x:hidden;
 }
-button,select {touch-action:manipulation}
+button,select,a {touch-action:manipulation}
 .app-wrapper {
   max-width:480px;
   margin:0 auto;
@@ -690,7 +690,7 @@ select option {background:#111320;color:#fff}
       <div class="upi-top-card">
         <div>
           <div class="upi-amt-label">Pay Exact Amount</div>
-          <div class="upi-amt-val" id="upiPayAmount">₹25</div>
+          <div class="upi-amt-val" id="upiPayAmount">₹0</div>
         </div>
         <div class="upi-timer-badge" id="upiTimerBadge">10:00</div>
       </div>
@@ -704,15 +704,15 @@ select option {background:#111320;color:#fff}
         <button class="vpa-copy-btn" id="upiCopyBtn" onclick="copyMerchantUpi()">COPY UPI</button>
       </div>
 
-      <button type="button" id="directUpiAppBtn" class="upi-app-btn" onclick="launchDirectUpi('default')">
-        Pay ₹25 with UPI App ⚡
-      </button>
+      <a id="directUpiAppBtn" href="#" class="upi-app-btn" onclick="return launchDirectUpi(event, 'default')">
+        Pay with UPI App ⚡
+      </a>
 
       <div class="direct-apps-grid">
-        <button type="button" class="app-chip-btn" id="btnGpay" onclick="launchDirectUpi('gpay')">GPay</button>
-        <button type="button" class="app-chip-btn" id="btnPhonepe" onclick="launchDirectUpi('phonepe')">PhonePe</button>
-        <button type="button" class="app-chip-btn" id="btnPaytm" onclick="launchDirectUpi('paytm')">Paytm</button>
-        <button type="button" class="app-chip-btn" id="btnBhim" onclick="launchDirectUpi('bhim')">BHIM</button>
+        <a href="#" class="app-chip-btn" id="btnGpay" onclick="return launchDirectUpi(event, 'gpay')">GPay</a>
+        <a href="#" class="app-chip-btn" id="btnPhonepe" onclick="return launchDirectUpi(event, 'phonepe')">PhonePe</a>
+        <a href="#" class="app-chip-btn" id="btnPaytm" onclick="return launchDirectUpi(event, 'paytm')">Paytm</a>
+        <a href="#" class="app-chip-btn" id="btnBhim" onclick="return launchDirectUpi(event, 'bhim')">BHIM</a>
       </div>
 
       <div class="utr-verify-section">
@@ -796,13 +796,15 @@ const PACKAGES=[
  {title:"120 Days Legend",days:120,likes:"26,400",amount:600,icon:SVG_ICONS.trophy,badge:"MAX"}
 ];
 
-const tg=window.Telegram.WebApp;
-tg.ready();
-tg.expand();
+const tg=(window.Telegram&&window.Telegram.WebApp)?window.Telegram.WebApp:null;
+if(tg){
+ tg.ready();
+ tg.expand();
+}
 
 let buyer={name:"FF Player",username:"Not Set",rawUsername:"",id:"Unknown"};
 
-if(tg.initDataUnsafe&&tg.initDataUnsafe.user){
+if(tg&&tg.initDataUnsafe&&tg.initDataUnsafe.user){
  const u=tg.initDataUnsafe.user;
  buyer.name=[u.first_name,u.last_name].filter(Boolean).join(" ");
  buyer.rawUsername=(u.username||"").toLowerCase();
@@ -1006,7 +1008,7 @@ function saveOrders(orders){
 
 function checkActivationLink(){
  const urlParams=new URLSearchParams(window.location.search);
- const startParam=(tg.initDataUnsafe&&tg.initDataUnsafe.start_param)||urlParams.get("approve");
+ const startParam=(tg&&tg.initDataUnsafe&&tg.initDataUnsafe.start_param)||urlParams.get("approve");
 
  if(startParam){
   const cleanId=startParam.replace("#","").trim().toUpperCase();
@@ -1185,7 +1187,7 @@ function handleConfirmAction(){
  }
 }
 
-/* STARS DIRECT DM FLOW (UNCHANGED) */
+/* STARS DIRECT DM & VERIFIED UPI DM FLOW */
 function proceedToDM(verifiedUtr=""){
  if(!activePackage)return;
 
@@ -1249,7 +1251,11 @@ ${toBold("I WANT TO BUY MAX FF AUTOLIKES:")}
 
  pendingUpiSession=null;
  const dmUrl=`https://t.me/${ADMIN_USERNAME}?text=${encodeURIComponent(orderText)}`;
- tg.openTelegramLink(dmUrl);
+ if(tg&&tg.openTelegramLink){
+  tg.openTelegramLink(dmUrl);
+ }else{
+  window.location.href=dmUrl;
+ }
 }
 
 /* REAL-TIME CLOCK TIMER */
@@ -1271,6 +1277,30 @@ document.addEventListener("visibilitychange",()=>{
   updateUpiTimerDisplay();
  }
 });
+
+/* BUILD UPI LINKS FOR SELECTED PLAN AMOUNT */
+function getUpiSchemes(q){
+ const isIOS=/iPhone|iPad|iPod/i.test(navigator.userAgent);
+ const isAndroid=/Android/i.test(navigator.userAgent);
+
+ if(isAndroid){
+  return {
+   default:`upi://pay?${q}`,
+   gpay:`intent://pay?${q}#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end`,
+   phonepe:`intent://pay?${q}#Intent;scheme=upi;package=com.phonepe.app;end`,
+   paytm:`intent://pay?${q}#Intent;scheme=upi;package=net.one97.paytm;end`,
+   bhim:`intent://pay?${q}#Intent;scheme=upi;package=in.org.npci.upiapp;end`
+  };
+ }
+
+ return {
+  default:isIOS?`paytmmp://pay?${q}`:`upi://pay?${q}`,
+  gpay:`tez://upi/pay?${q}`,
+  phonepe:`phonepe://pay?${q}`,
+  paytm:`paytmmp://pay?${q}`,
+  bhim:`bhim://upi/pay?${q}`
+ };
+}
 
 /* UPI CHECKOUT FLOW */
 function openUpiCheckout(){
@@ -1298,6 +1328,13 @@ function openUpiCheckout(){
  document.getElementById("directUpiAppBtn").innerText=`Pay ₹${activePackage.amount} with UPI App ⚡`;
  document.getElementById("upiUtrField").value="";
 
+ const links=getUpiSchemes(queryStr);
+ document.getElementById("directUpiAppBtn").href=links.default;
+ document.getElementById("btnGpay").href=links.gpay;
+ document.getElementById("btnPhonepe").href=links.phonepe;
+ document.getElementById("btnPaytm").href=links.paytm;
+ document.getElementById("btnBhim").href=links.bhim;
+
  const genericUri=`upi://pay?${queryStr}`;
  const qrContainer=document.getElementById("upiQrBox");
  qrContainer.innerHTML="";
@@ -1317,45 +1354,27 @@ function openUpiCheckout(){
  document.getElementById("upiCheckoutModal").classList.add("show");
 }
 
-function triggerDeepLink(url){
- const a=document.createElement("a");
- a.href=url;
- a.style.display="none";
- document.body.appendChild(a);
- a.click();
- document.body.removeChild(a);
-}
+function launchDirectUpi(e,appType){
+ if(e)e.preventDefault();
+ if(!pendingUpiSession)return false;
 
-function launchDirectUpi(appType){
- if(!pendingUpiSession)return;
- const q=pendingUpiSession.queryStr;
- const isIOS=/iPhone|iPad|iPod/i.test(navigator.userAgent);
+ const links=getUpiSchemes(pendingUpiSession.queryStr);
+ const targetUrl=links[appType]||links.default;
+ window.location.href=targetUrl;
 
- const schemes={
-  default:isIOS?`paytmmp://pay?${q}`:`upi://pay?${q}`,
-  gpay:`tez://upi/pay?${q}`,
-  phonepe:`phonepe://pay?${q}`,
-  paytm:`paytmmp://pay?${q}`,
-  bhim:isIOS?`bhim://upi/pay?${q}`:`upi://pay?${q}`
- };
-
- const targetUrl=schemes[appType]||schemes.default;
- triggerDeepLink(targetUrl);
-
- if(isIOS&&appType==="default"){
-  setTimeout(()=>{
-   if(!document.hidden){
-    showToast("📲 Tap Paytm / GPay / PhonePe below or scan QR");
-   }
-  },900);
- }
+ setTimeout(()=>{
+  if(!document.hidden){
+   showToast("📲 App not opened? Copy UPI ID or scan QR above");
+  }
+ },1200);
+ return false;
 }
 
 function copyMerchantUpi(){
  navigator.clipboard.writeText(MERCHANT_UPI_ID);
  const btn=document.getElementById("upiCopyBtn");
  btn.innerText="COPIED!";
- if(tg.HapticFeedback)tg.HapticFeedback.notificationOccurred("success");
+ if(tg&&tg.HapticFeedback)tg.HapticFeedback.notificationOccurred("success");
  setTimeout(()=>btn.innerText="COPY UPI",2000);
 }
 
@@ -1375,7 +1394,7 @@ async function pasteUtrFromClipboard(){
    if(digits){
     input.value=digits;
     btn.innerText="PASTED!";
-    if(tg.HapticFeedback)tg.HapticFeedback.notificationOccurred("success");
+    if(tg&&tg.HapticFeedback)tg.HapticFeedback.notificationOccurred("success");
     setTimeout(()=>btn.innerText="PASTE",1800);
     return;
    }
@@ -1413,14 +1432,14 @@ function cancelCheckingAndReject(){
  rejectUpiPayment("Verification cancelled by buyer");
 }
 
-/* 60-SECOND CHECKING PAYMENT TIMER + AUTO-POLLING */
+/* 60-SECOND CHECKING PAYMENT TIMER + REAL PAYTM GMAIL SYNC VERIFICATION */
 async function verifyAndSuccessUpi(){
  if(!activePackage||!pendingUpiSession)return;
 
  const utr=document.getElementById("upiUtrField").value.trim();
 
  if(!/^\d{12}$/.test(utr)){
-  if(tg.HapticFeedback)tg.HapticFeedback.notificationOccurred("error");
+  if(tg&&tg.HapticFeedback)tg.HapticFeedback.notificationOccurred("error");
   showToast("⚠️ Enter valid 12-digit UPI UTR number!");
   return;
  }
@@ -1452,7 +1471,7 @@ async function verifyAndSuccessUpi(){
   if(rem<=0&&!isFinished){
    isFinished=true;
    stopCheckingTimers();
-   rejectUpiPayment("Payment not received in Paytm within 60s. Please verify UTR or try again.");
+   rejectUpiPayment("Payment not received in Paytm within 60s. Fake or unreceived UTR rejected.");
   }
  }
 
@@ -1478,7 +1497,7 @@ async function verifyAndSuccessUpi(){
     clearInterval(upiCountdownInterval);
     saveUsedUtr(utr);
 
-    if(tg.HapticFeedback)tg.HapticFeedback.notificationOccurred("success");
+    if(tg&&tg.HapticFeedback)tg.HapticFeedback.notificationOccurred("success");
 
     document.getElementById("upiCheckingView").style.display="none";
     document.getElementById("upiSuccessSummary").innerText=`₹${activePackage.amount} Verified • UTR: ${utr}`;
@@ -1514,7 +1533,7 @@ async function verifyAndSuccessUpi(){
 function rejectUpiPayment(reasonText="Payment rejected"){
  stopCheckingTimers();
  clearInterval(upiCountdownInterval);
- if(tg.HapticFeedback)tg.HapticFeedback.notificationOccurred("error");
+ if(tg&&tg.HapticFeedback)tg.HapticFeedback.notificationOccurred("error");
 
  if(activePackage&&pendingUpiSession){
   const now=new Date();
