@@ -685,29 +685,29 @@ select option {background:#111320;color:#fff}
   </div>
 </div>
 
-<!-- ADD BALANCE MODAL (MIN ₹30) -->
+<!-- ADD BALANCE MODAL (MIN ₹10) -->
 <div class="modal-backdrop" id="topupModal" onclick="if(event.target.id==='topupModal')closeTopupModal()">
   <div class="bottom-sheet">
     <div class="drag-pill"></div>
     <div class="sheet-header">
       <div>
-        <h2>Add Wallet Balance 💵</h2>
-        <div class="sheet-sub">Instant UPI Top-Up • Min ₹30</div>
+        <h2>Add Wallet Balance 👛</h2>
+        <div class="sheet-sub">Instant UPI Top-Up • Min ₹10</div>
       </div>
       <button class="close-modal" onclick="closeTopupModal()">✕</button>
     </div>
 
     <div class="topup-chips">
-      <button type="button" class="chip-amt active" onclick="selectTopupChip(30,this)">₹30</button>
+      <button type="button" class="chip-amt active" onclick="selectTopupChip(10,this)">₹10</button>
+      <button type="button" class="chip-amt" onclick="selectTopupChip(30,this)">₹30</button>
       <button type="button" class="chip-amt" onclick="selectTopupChip(50,this)">₹50</button>
       <button type="button" class="chip-amt" onclick="selectTopupChip(100,this)">₹100</button>
       <button type="button" class="chip-amt" onclick="selectTopupChip(200,this)">₹200</button>
-      <button type="button" class="chip-amt" onclick="selectTopupChip(500,this)">₹500</button>
     </div>
 
     <div class="utr-input-wrap" style="margin-bottom:14px;">
       <span style="padding-left:13px;font-size:17px;font-weight:900;color:#fbbf24;">₹</span>
-      <input type="tel" id="topupAmountInput" class="utr-input-field" value="30" placeholder="Enter amount (Min ₹30)" oninput="this.value=this.value.replace(/\D/g,'').slice(0,5)">
+      <input type="tel" id="topupAmountInput" class="utr-input-field" value="10" placeholder="Enter amount (Min ₹10)" oninput="this.value=this.value.replace(/\D/g,'').slice(0,5)">
     </div>
 
     <button class="dm-btn" onclick="startWalletTopupUpi()">
@@ -736,7 +736,7 @@ select option {background:#111320;color:#fff}
       <div class="receipt-row total"><span>Total Payable</span><strong id="recPrice"></strong></div>
     </div>
     <p id="confirmHintText" style="text-align:center;font-size:11px;color:var(--muted);margin-bottom:14px;">
-      Available Wallet Balance: <b>₹0</b>. Pay instantly via Wallet or UPI.
+      Available Wallet Balance: <b>₹0</b>. Pay via Wallet or UPI.
     </p>
 
     <!-- BOTH WALLET & UPI BUTTONS FOR INR PACKAGES -->
@@ -1253,13 +1253,13 @@ let checkingTimerInterval=null;
 let checkingPollInterval=null;
 let isCheckingAborted=false;
 
-/* WALLET ADD BALANCE FLOW */
+/* WALLET ADD BALANCE FLOW (MIN ₹10) */
 function openTopupModal(){
  if(!buyer.id||buyer.id==="Unknown"){
   showToast("⚠️ Open inside Telegram Mini App to use Wallet!");
   return;
  }
- document.getElementById("topupAmountInput").value="30";
+ document.getElementById("topupAmountInput").value="10";
  document.querySelectorAll(".chip-amt").forEach((c,i)=>c.classList.toggle("active",i===0));
  document.getElementById("topupModal").classList.add("show");
 }
@@ -1276,8 +1276,8 @@ function selectTopupChip(amt,el){
 
 function startWalletTopupUpi(){
  const amt=Number(document.getElementById("topupAmountInput").value||0);
- if(amt<30){
-  showToast("⚠️ Minimum wallet top-up is ₹30!");
+ if(amt<10){
+  showToast("⚠️ Minimum wallet top-up is ₹10!");
   return;
  }
  closeTopupModal();
@@ -1294,7 +1294,7 @@ function startWalletTopupUpi(){
   queryStr
  };
 
- renderUpiModalUI("Add Wallet Balance 👛",`Top-Up #${topupId} • Min ₹30`,amt,queryStr);
+ renderUpiModalUI("Add Wallet Balance 👛",`Top-Up #${topupId} • Min ₹10`,amt,queryStr);
 }
 
 function openCheckout(idx){
@@ -1388,7 +1388,7 @@ async function payWithWallet(){
 
   pendingUpiSession={orderId};
   btn.disabled=false;
-  proceedToDM("WALLET-PAID","Wallet Balance 👛");
+  proceedToDM("WALLET-PAID","Wallet Balance 💵");
  }catch(err){
   btn.disabled=false;
   label.innerText=`Pay ₹${activePackage.amount} from Wallet`;
