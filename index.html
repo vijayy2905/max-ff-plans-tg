@@ -298,9 +298,9 @@ select option {background:#111320;color:#fff}
   justify-content:space-between;padding-top:8px;
   border-top:1px solid rgba(255,255,255,.06);
 }
-.order-actions {display:flex;gap:8px;margin-top:10px}
+.order-actions {display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .mini-btn {
-  flex:1;padding:8px;border-radius:10px;font-size:11px;
+  flex:1;min-width:110px;padding:8px;border-radius:10px;font-size:11px;
   font-weight:800;border:1px solid var(--border);
   background:var(--bg);color:var(--text);cursor:pointer;
 }
@@ -862,7 +862,7 @@ const MERCHANT_UPI_NAME="Vijaymohan R";
 const VERIFY_WORKER_URL="https://max-upi-verify.5dmznv6yfw.workers.dev";
 
 const SVG_ICONS={
-  spark:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>`,
+  spark:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83 2.83"/></svg>`,
   bolt:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
   trend:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`,
   rocket:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/></svg>`,
@@ -987,6 +987,37 @@ function showToast(msg){
  toastTimer=setTimeout(()=>box.classList.remove("show"),3000);
 }
 
+function copyViaTextareaFallback(str){
+ try{
+  const ta=document.createElement("textarea");
+  ta.value=str;
+  ta.setAttribute("readonly","");
+  ta.style.position="fixed";
+  ta.style.top="-9999px";
+  ta.style.left="-9999px";
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  ta.setSelectionRange(0,str.length);
+  const ok=document.execCommand("copy");
+  document.body.removeChild(ta);
+  return !!ok;
+ }catch(e){
+  return false;
+ }
+}
+
+function copyTextReliable(text){
+ const str=String(text??"");
+ if(!str)return Promise.resolve(false);
+ if(navigator.clipboard&&typeof navigator.clipboard.writeText==="function"){
+  return navigator.clipboard.writeText(str)
+   .then(()=>true)
+   .catch(()=>copyViaTextareaFallback(str));
+ }
+ return Promise.resolve(copyViaTextareaFallback(str));
+}
+
 function toBold(str){
  const normal="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
  const bold="𝗔𝗕𝗖𝗗𝗘𝗙𝗚𝗛𝗜𝗝𝗞𝗟𝗠𝗡𝗢𝗣𝗤𝗥𝗦𝗧𝗨𝗩𝗪𝗫𝗬𝗭𝗮𝗯𝗰𝗱𝗲𝗳𝗴𝗵𝗶𝗷𝗸𝗹𝗺𝗻𝗼𝗽𝗾𝗿𝘀𝘁𝘂𝘃𝘄𝘅𝘆𝘇𝟬𝟭𝟮𝟯𝟰𝟱𝟲𝟳𝟴𝟵";
@@ -1002,6 +1033,23 @@ function normalizeFfOrderId(rawId){
  const digits=clean.replace(/\D/g,"");
  if(digits.length>=6)return "FF"+digits.slice(-6);
  return "FF"+Math.floor(100000+Math.random()*900000);
+}
+
+function getQuotedApproveCommand(order){
+ hydrateBuyerInfo();
+ const ffId=normalizeFfOrderId(order.id);
+ return `'/approve ${buyer.id} ${order.days} ${ffId}'`;
+}
+
+async function copyApprovalCommandById(orderId){
+ const found=getOrders().find(o=>normalizeFfOrderId(o.id)===normalizeFfOrderId(orderId));
+ if(!found)return;
+ const quotedCmd=getQuotedApproveCommand(found);
+ const copied=await copyTextReliable(quotedCmd);
+ if(tg&&tg.HapticFeedback){
+  tg.HapticFeedback.notificationOccurred(copied?"success":"warning");
+ }
+ showToast(copied?`Copied ${quotedCmd}`:"Could not copy command");
 }
 
 function getDemoUsedIds(){
@@ -1229,26 +1277,17 @@ function updateOrderStatus(orderId,newStatus){
 
 let dmLaunchLock=false;
 
-function copyTextSafe(text){
- try{
-  if(navigator.clipboard&&navigator.clipboard.writeText){
-   navigator.clipboard.writeText(text).catch(()=>{});
-  }
- }catch(e){}
-}
-
-function openDmWithText(promptText){
+async function openDmWithText(promptText){
  if(dmLaunchLock)return;
  dmLaunchLock=true;
  setTimeout(()=>{dmLaunchLock=false;},700);
 
- copyTextSafe(promptText);
-
+ const copied=await copyTextReliable(promptText);
  const encoded=encodeURIComponent(promptText);
  const httpsUrl=`https://t.me/${ADMIN_USERNAME}?text=${encoded}`;
  const nativeUrl=`tg://resolve?domain=${ADMIN_USERNAME}&text=${encoded}`;
 
- showToast("Opening @vijxzz DM (copied to clipboard too)");
+ showToast(copied?"Prompt copied! Opening @vijxzz...":"Opening @vijxzz DM...");
 
  try{
   if(tg&&typeof tg.openTelegramLink==="function"){
@@ -1273,7 +1312,7 @@ function buildOrderDmText(order){
  hydrateBuyerInfo();
  const ffId=normalizeFfOrderId(order.id);
  const dayLabel=`${order.days} ${order.days===1?"Day":"Days"}`;
- const adminCmd=`/approve ${buyer.id} ${order.days} ${ffId}`;
+ const quotedCmd=getQuotedApproveCommand(order);
  const timeOnly=order.timeOnly||(order.date?order.date.split(" ").slice(-2).join(" "):new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}));
 
  return `❤️‍🔥 ${toBold("HELLO")} @${ADMIN_USERNAME} 👋
@@ -1292,7 +1331,7 @@ ${toBold("I WANT TO BUY MAX FF AUTOLIKES:")}
 ⏰ ${toBold("TIME:")} ${toBold(timeOnly)}
 
 ⚡ ${toBold("ADMIN COMMAND:")}
-${adminCmd}`;
+${quotedCmd}`;
 }
 
 function sendPromptToAdminDm(order){
@@ -1349,6 +1388,7 @@ function renderOrders(){
    ${o.status==="pending"?`
     <div class="order-actions">
      <button class="mini-btn dm" onclick="openOrderDmById('${ffId}')">📩 Open DM Prompt</button>
+     <button class="mini-btn ok" onclick="copyApprovalCommandById('${ffId}')">📋 Copy Approval</button>
      ${isAdmin?`
       <button class="mini-btn ok" onclick="updateOrderStatus('${o.id}','successful')">✓ Approve</button>
       <button class="mini-btn fail" onclick="updateOrderStatus('${o.id}','failed')">✕ Reject</button>
@@ -1407,6 +1447,7 @@ function renderMyPlans(){
     ${p.status==="pending"?`
      <div class="order-actions">
       <button class="mini-btn dm" onclick="openOrderDmById('${ffId}')">📩 Send #${ffId} to @vijxzz</button>
+      <button class="mini-btn ok" onclick="copyApprovalCommandById('${ffId}')">📋 Copy Approval</button>
      </div>`:""}
    </div>`;
  }).join("");
@@ -1611,7 +1652,7 @@ function proceedToDM(verifiedUtr="",customPaymentLabel="",autoOpenDm=true){
  pendingUpiSession=null;
 
  const promptText=buildOrderDmText(newOrder);
- copyTextSafe(promptText);
+ copyTextReliable(promptText);
 
  if(autoOpenDm){
   openDmWithText(promptText);
@@ -1754,7 +1795,7 @@ function launchDirectUpi(e,appType){
 }
 
 function copyMerchantUpi(){
- copyTextSafe(MERCHANT_UPI_ID);
+ copyTextReliable(MERCHANT_UPI_ID);
  const btn=document.getElementById("upiCopyBtn");
  btn.innerText="COPIED!";
  if(tg&&tg.HapticFeedback)tg.HapticFeedback.notificationOccurred("success");
