@@ -136,7 +136,6 @@ button,select,a {touch-action:manipulation}
   width:36px;height:36px;border-radius:11px;
   background:rgba(0,245,212,.14);border:1px solid rgba(0,245,212,.3);
   color:var(--cyan);display:flex;align-items:center;justify-content:center;flex-shrink:0;
-  font-size:19px;
 }
 .wallet-label {font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
 .wallet-val {font-size:19px;font-weight:900;color:#fff;line-height:1.15}
@@ -598,14 +597,17 @@ select option {background:#111320;color:#fff}
   <!-- WALLET BALANCE BAR -->
   <div class="wallet-bar">
     <div class="wallet-left">
-      <div class="wallet-icon">💵</div>
+      <div class="wallet-icon">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+      </div>
       <div>
         <div class="wallet-label">Wallet Balance</div>
         <div class="wallet-val" id="walletBalanceDisplay">₹0</div>
       </div>
     </div>
     <button class="add-bal-btn" onclick="openTopupModal()">
-      💵 Add Balance
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Balance
     </button>
   </div>
 
@@ -652,7 +654,7 @@ select option {background:#111320;color:#fff}
       <div class="input-group">
         <label>Payment Method</label>
         <select id="paymentSelect" onchange="renderPackages()">
-          <option value="UPI">FamPay UPI (IND 🇮🇳)</option>
+          <option value="UPI">UPI (IND 🇮🇳)</option>
           <option value="STARS">Telegram Stars ⭐️</option>
         </select>
       </div>
@@ -690,7 +692,7 @@ select option {background:#111320;color:#fff}
     <div class="sheet-header">
       <div>
         <h2>Add Wallet Balance 💵</h2>
-        <div class="sheet-sub">Instant FamPay UPI Top-Up • Min ₹10</div>
+        <div class="sheet-sub">Instant UPI Top-Up • Min ₹10</div>
       </div>
       <button class="close-modal" onclick="closeTopupModal()">✕</button>
     </div>
@@ -709,7 +711,7 @@ select option {background:#111320;color:#fff}
     </div>
 
     <button class="dm-btn" onclick="startWalletTopupUpi()">
-      💵 Proceed to Pay via FamPay UPI
+      Proceed to Pay via UPI ⚡
     </button>
   </div>
 </div>
@@ -734,18 +736,18 @@ select option {background:#111320;color:#fff}
       <div class="receipt-row total"><span>Total Payable</span><strong id="recPrice"></strong></div>
     </div>
     <p id="confirmHintText" style="text-align:center;font-size:11px;color:var(--muted);margin-bottom:14px;">
-      Available Wallet Balance: <b>₹0</b>. Pay via Wallet or FamPay UPI.
+      Available Wallet Balance: <b>₹0</b>. Pay via Wallet or UPI.
     </p>
 
     <!-- BOTH WALLET & UPI BUTTONS FOR INR PACKAGES -->
     <div id="inrPayButtonsWrap">
       <button class="wallet-pay-btn" id="walletPayBtn" onclick="payWithWallet()">
-        <span>💵</span>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
         <span id="walletPayBtnLabel">Pay ₹0 from Wallet</span>
       </button>
       <button class="dm-btn" id="upiPayBtn" onclick="openUpiCheckout()">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-        <span id="upiPayBtnLabel">Pay ₹0 via FamPay UPI</span>
+        <span id="upiPayBtnLabel">Pay ₹0 via UPI</span>
       </button>
     </div>
 
@@ -768,7 +770,7 @@ select option {background:#111320;color:#fff}
     <div id="upiActiveView">
       <div class="sheet-header">
         <div>
-          <h2 id="upiModalHeading">FamPay UPI Checkout 🇮🇳</h2>
+          <h2 id="upiModalHeading">UPI Checkout 🇮🇳</h2>
           <div class="sheet-sub" id="upiOrderMeta">Order #FF000000</div>
         </div>
         <button class="close-modal" onclick="rejectUpiPayment('Payment cancelled by buyer')">✕</button>
@@ -821,7 +823,7 @@ select option {background:#111320;color:#fff}
       <h3 style="font-size:19px;font-weight:900;color:#fff;margin-bottom:4px;">Checking Payment...</h3>
       <div class="checking-countdown-pill" id="checkingTimerText">01:00</div>
       <p id="checkingSubText" style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:14px;">
-        Waiting for FamPay payment confirmation...<br>Do not close this screen.
+        Waiting for FamPay payment confirmation mail...<br>Do not close this screen.
       </p>
       <button class="reject-btn" style="width:100%;" onclick="cancelCheckingAndReject()">✕ Cancel Verification</button>
     </div>
@@ -1070,7 +1072,7 @@ function formatPrice(amount){
 function getPaymentLabel(overrideLabel=""){
  if(overrideLabel)return overrideLabel;
  const mode=document.getElementById("paymentSelect").value;
- return mode==="STARS"?"Telegram Stars ⭐️":"FamPay UPI (IND 🇮🇳)";
+ return mode==="STARS"?"Telegram Stars ⭐️":"UPI (IND 🇮🇳)";
 }
 
 function renderPackages(){
@@ -1282,7 +1284,7 @@ function startWalletTopupUpi(){
 
  const topupId="WT"+Math.floor(100000+Math.random()*900000);
  const amountFixed=amt.toFixed(2);
- // Clean personal P2P UPI query (no tr= so iOS apps don't reject @fam)
+ // Clean personal P2P UPI query (no tr=/tn= so iOS apps don't reject @fam)
  const queryStr=`pa=${MERCHANT_UPI_ID}&pn=${encodeURIComponent(MERCHANT_UPI_NAME)}&am=${amountFixed}&cu=INR`;
 
  pendingUpiSession={
@@ -1307,7 +1309,7 @@ function openCheckout(idx){
  activePackage=pkg;
  const mode=document.getElementById("paymentSelect").value;
  const server=document.getElementById("serverSelect").value;
- const paymentLabel=mode==="STARS"?"Telegram Stars ⭐️":"Wallet / FamPay UPI (IND 🇮🇳)";
+ const paymentLabel=mode==="STARS"?"Telegram Stars ⭐️":"Wallet / UPI (IND 🇮🇳)";
  const formattedPrice=formatPrice(activePackage.amount);
 
  document.getElementById("modalSubtitle").innerText=`${activePackage.days} Days • ${activePackage.likes} Total Likes`;
@@ -1321,9 +1323,9 @@ function openCheckout(idx){
   document.getElementById("inrPayButtonsWrap").style.display="none";
   document.getElementById("starsPayButtonWrap").style.display="block";
  }else{
-  document.getElementById("confirmHintText").innerHTML=`Available Wallet Balance: <b>₹${walletBalance}</b>. Pay via Wallet or FamPay UPI.`;
+  document.getElementById("confirmHintText").innerHTML=`Available Wallet Balance: <b>₹${walletBalance}</b>. Pay via Wallet or UPI.`;
   document.getElementById("walletPayBtnLabel").innerText=`Pay ₹${activePackage.amount} from Wallet`;
-  document.getElementById("upiPayBtnLabel").innerText=`Pay ₹${activePackage.amount} via FamPay UPI`;
+  document.getElementById("upiPayBtnLabel").innerText=`Pay ₹${activePackage.amount} via UPI`;
   document.getElementById("inrPayButtonsWrap").style.display="block";
   document.getElementById("starsPayButtonWrap").style.display="none";
  }
@@ -1486,7 +1488,7 @@ document.addEventListener("visibilitychange",()=>{
  }
 });
 
-/* BUILD iOS & ANDROID COMPATIBLE UPI LINKS */
+/* BUILD UPI LINKS FOR SELECTED AMOUNT */
 function getUpiSchemes(q){
  const isAndroid=/Android/i.test(navigator.userAgent);
 
@@ -1500,7 +1502,6 @@ function getUpiSchemes(q){
   };
  }
 
- // iOS / iPhone deep links (clean P2P params without tr=)
  return {
   default:`upi://pay?${q}`,
   gpay:`gpay://upi/pay?${q}`,
@@ -1555,7 +1556,7 @@ function openUpiCheckout(){
  const orderId="FF"+Math.floor(100000+Math.random()*900000);
  const amountFixed=Number(activePackage.amount).toFixed(2);
  const server=document.getElementById("serverSelect").value;
- // Clean personal P2P UPI query (no tr= so iOS apps don't reject @fam)
+ // Clean personal P2P UPI query (no tr=/tn= so iOS apps don't reject @fam)
  const queryStr=`pa=${MERCHANT_UPI_ID}&pn=${encodeURIComponent(MERCHANT_UPI_NAME)}&am=${amountFixed}&cu=INR`;
 
  pendingUpiSession={
@@ -1566,7 +1567,7 @@ function openUpiCheckout(){
   queryStr
  };
 
- renderUpiModalUI("FamPay UPI Checkout 🇮🇳",`Order #${orderId} • ${activePackage.title}`,activePackage.amount,queryStr);
+ renderUpiModalUI("UPI Checkout 🇮🇳",`Order #${orderId} • ${activePackage.title}`,activePackage.amount,queryStr);
 }
 
 function launchDirectUpi(e,appType){
@@ -1576,7 +1577,7 @@ function launchDirectUpi(e,appType){
  const links=getUpiSchemes(pendingUpiSession.queryStr);
  const targetUrl=links[appType]||links.default;
 
- // Telegram iOS WebView blocks window.location.href for custom schemes; use tg.openLink or synchronous <a> click
+ // Telegram iOS WebView requires tg.openLink or synchronous <a> click for custom schemes
  if(tg&&typeof tg.openLink==="function"){
   try{
    tg.openLink(targetUrl);
@@ -1597,9 +1598,9 @@ function launchDirectUpi(e,appType){
 
  setTimeout(()=>{
   if(!document.hidden){
-   showToast("📲 App not opened? Copy 8807870262@fam or scan QR above");
+   showToast("📲 App not opened? Copy UPI ID or scan QR above");
   }
- },1400);
+ },1200);
  return false;
 }
 
@@ -1747,7 +1748,7 @@ async function verifyAndSuccessUpi(){
      setTimeout(()=>{
       pendingUpiSession=null;
       document.getElementById("upiCheckoutModal").classList.remove("show");
-      showToast(`💵 ₹${credited} Added to Wallet!`);
+      showToast(`✅ ₹${credited} Added to Wallet!`);
      },1600);
     }else{
      document.getElementById("upiSuccessSummary").innerText=`₹${expectedAmt} Verified • UTR: ${utr}`;
@@ -1756,7 +1757,7 @@ async function verifyAndSuccessUpi(){
 
      setTimeout(()=>{
       document.getElementById("upiCheckoutModal").classList.remove("show");
-      proceedToDM(utr,"FamPay UPI (IND 🇮🇳)");
+      proceedToDM(utr,"UPI (IND 🇮🇳)");
      },1600);
     }
     return;
@@ -1799,7 +1800,7 @@ function rejectUpiPayment(reasonText="Payment rejected"){
    likes:activePackage.likes,
    price:`₹${activePackage.amount}`,
    server:pendingUpiSession.server,
-   payment:"FamPay UPI (IND 🇮🇳)",
+   payment:"UPI (IND 🇮🇳)",
    status:"failed",
    startDate:getNextDayString(1),
    date:now.toLocaleDateString([],{month:"short",day:"numeric"})+" "+timeStr
