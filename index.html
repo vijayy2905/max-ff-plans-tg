@@ -114,7 +114,7 @@ button,select,a {touch-action:manipulation}
 .server-strip {
   background:linear-gradient(135deg,rgba(157,78,221,.11),rgba(15,17,30,.98));
   border:1px solid rgba(157,78,221,.24);
-  border-radius:14px;padding:9px 13px;margin-bottom:14px;
+  border-radius:14px;padding:9px 13px;margin-bottom:10px;
   display:flex;align-items:center;justify-content:space-between;gap:10px;
 }
 .server-strip span {
@@ -123,6 +123,31 @@ button,select,a {touch-action:manipulation}
 }
 .flags {letter-spacing:2px;font-size:13px;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
 .flags::-webkit-scrollbar {display:none}
+
+/* WALLET BAR */
+.wallet-bar {
+  background:linear-gradient(135deg,rgba(0,245,212,.11),rgba(157,78,221,.12) 60%,rgba(15,17,30,.98));
+  border:1px solid rgba(0,245,212,.28);
+  border-radius:16px;padding:11px 14px;margin-bottom:14px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+}
+.wallet-left {display:flex;align-items:center;gap:10px}
+.wallet-icon {
+  width:36px;height:36px;border-radius:11px;
+  background:rgba(0,245,212,.14);border:1px solid rgba(0,245,212,.3);
+  color:var(--cyan);display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.wallet-label {font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.wallet-val {font-size:19px;font-weight:900;color:#fff;line-height:1.15}
+.add-bal-btn {
+  background:linear-gradient(135deg,#00f5d4,#10b981);
+  color:#04130e;border:none;border-radius:12px;
+  padding:9px 14px;font-size:12px;font-weight:900;
+  cursor:pointer;display:flex;align-items:center;gap:5px;flex-shrink:0;
+  box-shadow:0 4px 14px rgba(0,245,212,.25);
+}
+.add-bal-btn:active {transform:scale(.96)}
+
 .nav-tabs {
   display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
   background:rgba(15,17,30,.92);
@@ -219,6 +244,7 @@ select option {background:#111320;color:#fff}
 }
 .price-tag {display:block;font-size:19px;font-weight:900;color:#fbbf24;line-height:1.1}
 .price-tag.star-mode {color:#38bdf8}
+.price-tag.wallet-mode {color:var(--cyan)}
 .empty-state {
   background:linear-gradient(145deg,var(--surface),var(--surface-2));
   border:1px dashed rgba(255,255,255,.14);
@@ -275,19 +301,13 @@ select option {background:#111320;color:#fff}
   box-shadow:0 8px 24px rgba(124,58,237,.18);
 }
 .progress-bar-bg {
-  width:100%;
-  height:9px;
+  width:100%;height:9px;
   background:rgba(255,255,255,.12);
-  border-radius:999px;
-  margin:11px 0 9px;
-  overflow:hidden;
-  position:relative;
+  border-radius:999px;margin:11px 0 9px;
+  overflow:hidden;position:relative;
 }
 .progress-bar-fill {
-  height:100%;
-  min-width:0;
-  border-radius:999px;
-  display:block;
+  height:100%;min-width:0;border-radius:999px;display:block;
   transition:width .6s ease;
   background:linear-gradient(90deg,#00f5d4,#9d4edd,#ff2a85);
 }
@@ -343,6 +363,21 @@ select option {background:#111320;color:#fff}
   display:flex;align-items:center;justify-content:center;gap:8px;
 }
 .dm-btn:active {transform:scale(.985)}
+.dm-btn:disabled {opacity:.6;cursor:not-allowed}
+
+/* ADD BALANCE QUICK CHIPS */
+.topup-chips {
+  display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:12px;
+}
+.chip-amt {
+  background:#161a2c;border:1px solid rgba(0,245,212,.28);
+  color:#fff;border-radius:11px;padding:10px 4px;
+  font-size:13px;font-weight:800;cursor:pointer;text-align:center;
+}
+.chip-amt.active,.chip-amt:active {
+  background:linear-gradient(135deg,#00f5d4,#10b981);
+  color:#04130e;border-color:transparent;
+}
 
 /* UPI CHECKOUT SHEET STYLES */
 .upi-top-card {
@@ -363,10 +398,8 @@ select option {background:#111320;color:#fff}
 }
 .qr-center-box {
   background:#ffffff;
-  padding:11px;
-  border-radius:18px;
-  width:fit-content;
-  margin:0 auto 10px;
+  padding:11px;border-radius:18px;
+  width:fit-content;margin:0 auto 10px;
   box-shadow:0 0 24px rgba(0,245,212,.22);
 }
 .vpa-copy-row {
@@ -392,24 +425,15 @@ select option {background:#111320;color:#fff}
 }
 .upi-app-btn:active {transform:scale(.98)}
 .direct-apps-grid {
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:7px;
-  margin-bottom:13px;
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:7px;margin-bottom:13px;
 }
 .app-chip-btn {
-  background:#161a2c;
-  border:1px solid rgba(255,255,255,.12);
-  border-radius:11px;
-  padding:8px 4px;
-  color:#f8fafc;
-  font-size:11px;
-  font-weight:800;
-  text-align:center;
-  text-decoration:none;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  background:#161a2c;border:1px solid rgba(255,255,255,.12);
+  border-radius:11px;padding:8px 4px;
+  color:#f8fafc;font-size:11px;font-weight:800;
+  text-align:center;text-decoration:none;
+  display:flex;align-items:center;justify-content:center;
   cursor:pointer;
 }
 .app-chip-btn:active {transform:scale(.96);border-color:var(--cyan)}
@@ -422,42 +446,27 @@ select option {background:#111320;color:#fff}
   color:var(--cyan);letter-spacing:.05em;margin-bottom:7px;
 }
 .utr-input-wrap {
-  display:flex;
-  align-items:center;
-  background:#07080f;
-  border:1px solid rgba(157,78,221,.4);
-  border-radius:12px;
-  padding-right:8px;
-  margin-bottom:10px;
+  display:flex;align-items:center;
+  background:#07080f;border:1px solid rgba(157,78,221,.4);
+  border-radius:12px;padding-right:8px;margin-bottom:10px;
 }
 .utr-input-wrap:focus-within {border-color:var(--cyan)}
 .utr-input-field {
-  flex:1;
-  min-width:0;
-  background:transparent;
-  border:none;
-  padding:12px 13px;
-  color:#fff;font-size:15px;font-weight:800;
+  flex:1;min-width:0;background:transparent;border:none;
+  padding:12px 13px;color:#fff;font-size:15px;font-weight:800;
   letter-spacing:1.2px;outline:none;
 }
 .paste-utr-btn {
-  background:rgba(157,78,221,.22);
-  border:1px solid rgba(157,78,221,.45);
-  color:#e9d5ff;
-  border-radius:8px;
-  padding:6px 10px;
-  font-size:10.5px;
-  font-weight:800;
-  cursor:pointer;
-  flex-shrink:0;
+  background:rgba(157,78,221,.22);border:1px solid rgba(157,78,221,.45);
+  color:#e9d5ff;border-radius:8px;padding:6px 10px;
+  font-size:10.5px;font-weight:800;cursor:pointer;flex-shrink:0;
 }
 .paste-utr-btn:active {transform:scale(.95)}
 .upi-action-grid {
   display:grid;grid-template-columns:1fr 1.6fr;gap:9px;
 }
 .reject-btn {
-  background:rgba(239,68,68,.14);
-  border:1px solid rgba(239,68,68,.45);
+  background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.45);
   color:#f87171;border-radius:14px;padding:13px 10px;
   font-size:13px;font-weight:800;cursor:pointer;
 }
@@ -472,46 +481,31 @@ select option {background:#111320;color:#fff}
 .checking-spinner {
   width:64px;height:64px;border-radius:50%;
   border:4px solid rgba(0,245,212,.18);
-  border-top-color:#00f5d4;
-  border-right-color:#9d4edd;
-  margin:0 auto 14px;
-  animation:spinLoader 0.9s linear infinite;
+  border-top-color:#00f5d4;border-right-color:#9d4edd;
+  margin:0 auto 14px;animation:spinLoader 0.9s linear infinite;
 }
 @keyframes spinLoader {to{transform:rotate(360deg)}}
 .checking-countdown-pill {
   display:inline-block;
-  background:rgba(0,245,212,.14);
-  border:1px solid rgba(0,245,212,.4);
-  color:var(--cyan);
-  font-size:18px;font-weight:900;
-  padding:6px 18px;border-radius:999px;
-  margin:8px 0 10px;
+  background:rgba(0,245,212,.14);border:1px solid rgba(0,245,212,.4);
+  color:var(--cyan);font-size:18px;font-weight:900;
+  padding:6px 18px;border-radius:999px;margin:8px 0 10px;
   font-variant-numeric:tabular-nums;
 }
 
 /* LIVE SUCCESS TICK & REJECTED SCREENS */
-.status-result-screen {
-  text-align:center;
-  padding:26px 10px 14px;
-}
-.success-tick-wrap {
-  width:72px;height:72px;margin:0 auto 14px;
-}
+.status-result-screen {text-align:center;padding:26px 10px 14px}
+.success-tick-wrap {width:72px;height:72px;margin:0 auto 14px}
 .success-circle {
-  stroke:#10b981;
-  stroke-width:3.5;
-  stroke-dasharray:166;
-  stroke-dashoffset:166;
+  stroke:#10b981;stroke-width:3.5;
+  stroke-dasharray:166;stroke-dashoffset:166;
   fill:rgba(16,185,129,.12);
   animation:drawCircle .55s cubic-bezier(.65,0,.45,1) forwards;
 }
 .success-check {
-  stroke:#00f5d4;
-  stroke-width:4.5;
-  stroke-linecap:round;
-  stroke-linejoin:round;
-  stroke-dasharray:48;
-  stroke-dashoffset:48;
+  stroke:#00f5d4;stroke-width:4.5;
+  stroke-linecap:round;stroke-linejoin:round;
+  stroke-dasharray:48;stroke-dashoffset:48;
   animation:drawCheck .38s cubic-bezier(.65,0,.45,1) .42s forwards;
 }
 @keyframes drawCircle {to{stroke-dashoffset:0}}
@@ -519,8 +513,7 @@ select option {background:#111320;color:#fff}
 
 .rejected-icon {
   width:64px;height:64px;border-radius:50%;
-  background:rgba(239,68,68,.16);
-  border:2px solid rgba(239,68,68,.55);
+  background:rgba(239,68,68,.16);border:2px solid rgba(239,68,68,.55);
   color:#f87171;font-size:28px;font-weight:900;
   display:flex;align-items:center;justify-content:center;
   margin:0 auto 12px;
@@ -569,6 +562,23 @@ select option {background:#111320;color:#fff}
     <div class="flags">🇮🇳 🇧🇷 🇺🇸 🇸🇬 🇷🇺 🇮🇩 🇹🇼 🇻🇳 🇹🇭 🇵🇰 🇧🇩 🌍</div>
   </div>
 
+  <!-- WALLET BALANCE BAR -->
+  <div class="wallet-bar">
+    <div class="wallet-left">
+      <div class="wallet-icon">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+      </div>
+      <div>
+        <div class="wallet-label">Wallet Balance</div>
+        <div class="wallet-val" id="walletBalanceDisplay">₹0</div>
+      </div>
+    </div>
+    <button class="add-bal-btn" onclick="openTopupModal()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Balance
+    </button>
+  </div>
+
   <div class="nav-tabs">
     <button class="tab-btn active" onclick="switchTab('store',this)">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
@@ -612,6 +622,7 @@ select option {background:#111320;color:#fff}
       <div class="input-group">
         <label>Payment Method</label>
         <select id="paymentSelect" onchange="renderPackages()">
+          <option value="WALLET">Wallet Balance 👛</option>
           <option value="UPI">UPI (IND 🇮🇳)</option>
           <option value="STARS">Telegram Stars ⭐️</option>
         </select>
@@ -643,6 +654,37 @@ select option {background:#111320;color:#fff}
   </div>
 </div>
 
+<!-- ADD BALANCE MODAL (MIN ₹30) -->
+<div class="modal-backdrop" id="topupModal" onclick="if(event.target.id==='topupModal')closeTopupModal()">
+  <div class="bottom-sheet">
+    <div class="drag-pill"></div>
+    <div class="sheet-header">
+      <div>
+        <h2>Add Wallet Balance 👛</h2>
+        <div class="sheet-sub">Instant UPI Top-Up • Min ₹30</div>
+      </div>
+      <button class="close-modal" onclick="closeTopupModal()">✕</button>
+    </div>
+
+    <div class="topup-chips">
+      <button type="button" class="chip-amt active" onclick="selectTopupChip(30,this)">₹30</button>
+      <button type="button" class="chip-amt" onclick="selectTopupChip(50,this)">₹50</button>
+      <button type="button" class="chip-amt" onclick="selectTopupChip(100,this)">₹100</button>
+      <button type="button" class="chip-amt" onclick="selectTopupChip(200,this)">₹200</button>
+      <button type="button" class="chip-amt" onclick="selectTopupChip(500,this)">₹500</button>
+    </div>
+
+    <div class="utr-input-wrap" style="margin-bottom:14px;">
+      <span style="padding-left:13px;font-size:17px;font-weight:900;color:#fbbf24;">₹</span>
+      <input type="tel" id="topupAmountInput" class="utr-input-field" value="30" placeholder="Enter amount (Min ₹30)" oninput="this.value=this.value.replace(/\D/g,'').slice(0,5)">
+    </div>
+
+    <button class="dm-btn" onclick="startWalletTopupUpi()">
+      Proceed to Pay via UPI ⚡
+    </button>
+  </div>
+</div>
+
 <!-- CONFIRM ORDER MODAL -->
 <div class="modal-backdrop" id="checkoutModal" onclick="handleBackdropClick(event)">
   <div class="bottom-sheet">
@@ -663,16 +705,16 @@ select option {background:#111320;color:#fff}
       <div class="receipt-row total"><span>Total Payable</span><strong id="recPrice"></strong></div>
     </div>
     <p id="confirmHintText" style="text-align:center;font-size:11px;color:var(--muted);margin-bottom:14px;">
-      Tap below to open DM with <b>@vijxzz</b>. Your order will stay <b>Pending</b> until verified by Admin.
+      Tap below to pay instantly using your Wallet Balance.
     </p>
     <button class="dm-btn" id="confirmActionBtn" onclick="handleConfirmAction()">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-      <span id="confirmBtnLabel">Buy Now via @vijxzz</span>
+      <span id="confirmBtnLabel">Pay via Wallet</span>
     </button>
   </div>
 </div>
 
-<!-- UPI PAYMENT CHECKOUT MODAL -->
+<!-- UPI PAYMENT CHECKOUT MODAL (USED FOR BOTH ORDERS & WALLET TOP-UP) -->
 <div class="modal-backdrop" id="upiCheckoutModal">
   <div class="bottom-sheet">
     <div class="drag-pill"></div>
@@ -681,7 +723,7 @@ select option {background:#111320;color:#fff}
     <div id="upiActiveView">
       <div class="sheet-header">
         <div>
-          <h2>UPI Checkout 🇮🇳</h2>
+          <h2 id="upiModalHeading">UPI Checkout 🇮🇳</h2>
           <div class="sheet-sub" id="upiOrderMeta">Order #FF000000</div>
         </div>
         <button class="close-modal" onclick="rejectUpiPayment('Payment cancelled by buyer')">✕</button>
@@ -751,7 +793,7 @@ select option {background:#111320;color:#fff}
       <p id="upiSuccessSummary" style="font-size:12.5px;color:#e2e8f0;line-height:1.5;margin-bottom:6px;">
         Verified via Paytm UPI
       </p>
-      <p style="font-size:11.5px;color:var(--cyan);font-weight:700;">
+      <p id="upiSuccessNextHint" style="font-size:11.5px;color:var(--cyan);font-weight:700;">
         Opening @vijxzz DM with approval command...
       </p>
     </div>
@@ -818,8 +860,32 @@ document.getElementById("userName").innerText=buyer.name;
 document.getElementById("userId").innerText=`TG ID: ${buyer.id}`;
 document.getElementById("userAvatar").innerText=buyer.name.slice(0,2).toUpperCase();
 
-let toastTimer=null;
+let walletBalance=Number(localStorage.getItem(`maxff_wallet_${buyer.id}`)||0);
 
+function setWalletBalanceUI(bal){
+ walletBalance=Number(bal||0);
+ localStorage.setItem(`maxff_wallet_${buyer.id}`,String(walletBalance));
+ document.getElementById("walletBalanceDisplay").innerText=`₹${walletBalance}`;
+}
+setWalletBalanceUI(walletBalance);
+
+async function fetchWalletBalance(){
+ if(!buyer.id||buyer.id==="Unknown")return;
+ try{
+  const res=await fetch(VERIFY_WORKER_URL,{
+   method:"POST",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({action:"get_wallet",userId:String(buyer.id)})
+  });
+  const data=await res.json();
+  if(data&&data.ok&&typeof data.balance==="number"){
+   setWalletBalanceUI(data.balance);
+  }
+ }catch(e){}
+}
+fetchWalletBalance();
+
+let toastTimer=null;
 function showToast(msg){
  const box=document.getElementById("toastBox");
  box.textContent=msg;
@@ -958,11 +1024,14 @@ function formatPrice(amount){
 
 function getPaymentLabel(){
  const mode=document.getElementById("paymentSelect").value;
+ if(mode==="WALLET")return "Wallet Balance 👛";
  return mode==="STARS"?"Telegram Stars ⭐️":"UPI (IND 🇮🇳)";
 }
 
 function renderPackages(){
- const isStars=document.getElementById("paymentSelect").value==="STARS";
+ const mode=document.getElementById("paymentSelect").value;
+ const isStars=mode==="STARS";
+ const isWallet=mode==="WALLET";
  const demoLocked=isDemoLocked();
  const container=document.getElementById("plansContainer");
  container.innerHTML="";
@@ -985,7 +1054,7 @@ function renderPackages(){
     </div>
     <div class="plan-right">
      <span class="days-pill">${pkg.days} ${pkg.days===1?"DAY":"DAYS"}</span>
-     <span class="price-tag ${isStars?"star-mode":""}">${priceDisplay}</span>
+     <span class="price-tag ${isStars?"star-mode":(isWallet?"wallet-mode":"")}">${priceDisplay}</span>
     </div>
    </div>`;
  });
@@ -1139,6 +1208,50 @@ let checkingTimerInterval=null;
 let checkingPollInterval=null;
 let isCheckingAborted=false;
 
+/* WALLET ADD BALANCE FLOW */
+function openTopupModal(){
+ if(!buyer.id||buyer.id==="Unknown"){
+  showToast("⚠️ Open inside Telegram Mini App to use Wallet!");
+  return;
+ }
+ document.getElementById("topupAmountInput").value="30";
+ document.querySelectorAll(".chip-amt").forEach((c,i)=>c.classList.toggle("active",i===0));
+ document.getElementById("topupModal").classList.add("show");
+}
+
+function closeTopupModal(){
+ document.getElementById("topupModal").classList.remove("show");
+}
+
+function selectTopupChip(amt,el){
+ document.querySelectorAll(".chip-amt").forEach(c=>c.classList.remove("active"));
+ el.classList.add("active");
+ document.getElementById("topupAmountInput").value=String(amt);
+}
+
+function startWalletTopupUpi(){
+ const amt=Number(document.getElementById("topupAmountInput").value||0);
+ if(amt<30){
+  showToast("⚠️ Minimum wallet top-up is ₹30!");
+  return;
+ }
+ closeTopupModal();
+
+ const topupId="WT"+Math.floor(100000+Math.random()*900000);
+ const amountFixed=amt.toFixed(2);
+ const queryStr=`pa=${MERCHANT_UPI_ID}&pn=${encodeURIComponent(MERCHANT_UPI_NAME)}&tr=${topupId}&tn=${topupId}&am=${amountFixed}&cu=INR`;
+
+ pendingUpiSession={
+  mode:"topup",
+  orderId:topupId,
+  amount:amt,
+  server:"WALLET",
+  queryStr
+ };
+
+ renderUpiModalUI("Add Wallet Balance 👛",`Top-Up #${topupId} • Min ₹30`,amt,queryStr);
+}
+
 function openCheckout(idx){
  const pkg=PACKAGES[idx];
 
@@ -1159,7 +1272,10 @@ function openCheckout(idx){
  document.getElementById("recPayment").innerText=paymentLabel;
  document.getElementById("recPrice").innerText=formattedPrice;
 
- if(mode==="STARS"){
+ if(mode==="WALLET"){
+  document.getElementById("confirmHintText").innerHTML=`Available Wallet Balance: <b>₹${walletBalance}</b>. Instant deduction &amp; DM order receipt.`;
+  document.getElementById("confirmBtnLabel").innerText=`Pay ₹${activePackage.amount} from Wallet`;
+ }else if(mode==="STARS"){
   document.getElementById("confirmHintText").innerHTML=`Tap below to open DM with <b>@vijxzz</b>. Send Telegram Stars &amp; wait for Admin confirmation.`;
   document.getElementById("confirmBtnLabel").innerText=`Buy Now via @vijxzz`;
  }else{
@@ -1178,16 +1294,74 @@ function handleBackdropClick(e){
  if(e.target.id==="checkoutModal")closeCheckout();
 }
 
-function handleConfirmAction(){
+async function handleConfirmAction(){
  const mode=document.getElementById("paymentSelect").value;
- if(mode==="STARS"){
+ if(mode==="WALLET"){
+  await payWithWallet();
+ }else if(mode==="STARS"){
   proceedToDM();
  }else{
   openUpiCheckout();
  }
 }
 
-/* STARS DIRECT DM & VERIFIED UPI DM FLOW */
+async function payWithWallet(){
+ if(!activePackage)return;
+ if(!buyer.id||buyer.id==="Unknown"){
+  showToast("⚠️ Open inside Telegram Mini App to use Wallet!");
+  return;
+ }
+
+ if(walletBalance<activePackage.amount){
+  closeCheckout();
+  showToast(`⚠️ Low balance (₹${walletBalance}). Add ₹${activePackage.amount-walletBalance}+`);
+  openTopupModal();
+  return;
+ }
+
+ const btn=document.getElementById("confirmActionBtn");
+ const label=document.getElementById("confirmBtnLabel");
+ btn.disabled=true;
+ label.innerText="Deducting Wallet...";
+
+ const orderId="FF"+Math.floor(100000+Math.random()*900000);
+
+ try{
+  const res=await fetch(VERIFY_WORKER_URL,{
+   method:"POST",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({
+    action:"spend_wallet",
+    userId:String(buyer.id),
+    amount:activePackage.amount,
+    orderId
+   })
+  });
+  const data=await res.json();
+
+  if(!data||!data.ok){
+   if(typeof data?.balance==="number")setWalletBalanceUI(data.balance);
+   showToast(`❌ ${data?.reason||"Wallet payment failed"}`);
+   btn.disabled=false;
+   label.innerText=`Pay ₹${activePackage.amount} from Wallet`;
+   return;
+  }
+
+  setWalletBalanceUI(data.balance);
+  if(tg&&tg.HapticFeedback)tg.HapticFeedback.notificationOccurred("success");
+  showToast(`✅ Paid ₹${activePackage.amount} from Wallet!`);
+
+  pendingUpiSession={orderId};
+  btn.disabled=false;
+  proceedToDM("WALLET-PAID");
+ }catch(err){
+  btn.disabled=false;
+  label.innerText=`Pay ₹${activePackage.amount} from Wallet`;
+  showToast("⚠️ Network error. Try again!");
+ }
+}
+
+/* STARS, WALLET & VERIFIED UPI DM FLOW */
 function proceedToDM(verifiedUtr=""){
  if(!activePackage)return;
 
@@ -1229,7 +1403,7 @@ function proceedToDM(verifiedUtr=""){
  closeCheckout();
 
  const adminCmd=`/approve ${buyer.id} ${activePackage.days} ${orderId}`;
- const utrLine=verifiedUtr?`\n🔢 ${toBold("UTR NO:")} ${toBold(verifiedUtr)}`:"";
+ const utrLine=verifiedUtr?`\n🔢 ${toBold("REF / UTR:")} ${toBold(verifiedUtr)}`:"";
 
  const orderText=`❤️‍🔥 ${toBold("HELLO")} @${ADMIN_USERNAME} 👋
 
@@ -1278,7 +1452,7 @@ document.addEventListener("visibilitychange",()=>{
  }
 });
 
-/* BUILD UPI LINKS FOR SELECTED PLAN AMOUNT */
+/* BUILD UPI LINKS FOR SELECTED AMOUNT */
 function getUpiSchemes(q){
  const isIOS=/iPhone|iPad|iPod/i.test(navigator.userAgent);
  const isAndroid=/Android/i.test(navigator.userAgent);
@@ -1302,30 +1476,15 @@ function getUpiSchemes(q){
  };
 }
 
-/* UPI CHECKOUT FLOW */
-function openUpiCheckout(){
- if(!activePackage)return;
- closeCheckout();
-
- const orderId="FF"+Math.floor(100000+Math.random()*900000);
- const amountFixed=Number(activePackage.amount).toFixed(2);
- const server=document.getElementById("serverSelect").value;
- const queryStr=`pa=${MERCHANT_UPI_ID}&pn=${encodeURIComponent(MERCHANT_UPI_NAME)}&tr=${orderId}&tn=${orderId}&am=${amountFixed}&cu=INR`;
-
- pendingUpiSession={
-  orderId,
-  amount:activePackage.amount,
-  server,
-  queryStr
- };
-
+function renderUpiModalUI(headingText,metaText,amount,queryStr){
+ document.getElementById("upiModalHeading").innerText=headingText;
  document.getElementById("upiActiveView").style.display="block";
  document.getElementById("upiCheckingView").style.display="none";
  document.getElementById("upiSuccessView").style.display="none";
  document.getElementById("upiRejectedView").style.display="none";
- document.getElementById("upiOrderMeta").innerText=`Order #${orderId} • ${activePackage.title}`;
- document.getElementById("upiPayAmount").innerText=`₹${activePackage.amount}`;
- document.getElementById("directUpiAppBtn").innerText=`Pay ₹${activePackage.amount} with UPI App ⚡`;
+ document.getElementById("upiOrderMeta").innerText=metaText;
+ document.getElementById("upiPayAmount").innerText=`₹${amount}`;
+ document.getElementById("directUpiAppBtn").innerText=`Pay ₹${amount} with UPI App ⚡`;
  document.getElementById("upiUtrField").value="";
 
  const links=getUpiSchemes(queryStr);
@@ -1352,6 +1511,27 @@ function openUpiCheckout(){
  upiCountdownInterval=setInterval(updateUpiTimerDisplay,1000);
 
  document.getElementById("upiCheckoutModal").classList.add("show");
+}
+
+/* DIRECT ORDER UPI CHECKOUT FLOW */
+function openUpiCheckout(){
+ if(!activePackage)return;
+ closeCheckout();
+
+ const orderId="FF"+Math.floor(100000+Math.random()*900000);
+ const amountFixed=Number(activePackage.amount).toFixed(2);
+ const server=document.getElementById("serverSelect").value;
+ const queryStr=`pa=${MERCHANT_UPI_ID}&pn=${encodeURIComponent(MERCHANT_UPI_NAME)}&tr=${orderId}&tn=${orderId}&am=${amountFixed}&cu=INR`;
+
+ pendingUpiSession={
+  mode:"order",
+  orderId,
+  amount:activePackage.amount,
+  server,
+  queryStr
+ };
+
+ renderUpiModalUI("UPI Checkout 🇮🇳",`Order #${orderId} • ${activePackage.title}`,activePackage.amount,queryStr);
 }
 
 function launchDirectUpi(e,appType){
@@ -1434,8 +1614,10 @@ function cancelCheckingAndReject(){
 
 /* 60-SECOND CHECKING PAYMENT TIMER + REAL PAYTM GMAIL SYNC VERIFICATION */
 async function verifyAndSuccessUpi(){
- if(!activePackage||!pendingUpiSession)return;
+ if(!pendingUpiSession)return;
 
+ const isTopup=pendingUpiSession.mode==="topup";
+ const expectedAmt=pendingUpiSession.amount;
  const utr=document.getElementById("upiUtrField").value.trim();
 
  if(!/^\d{12}$/.test(utr)){
@@ -1478,14 +1660,14 @@ async function verifyAndSuccessUpi(){
  async function checkWorkerOnce(){
   if(isFinished||isCheckingAborted||!pendingUpiSession)return;
   try{
+   const payload=isTopup
+    ?{action:"topup_wallet",userId:String(buyer.id),utr,amount:expectedAmt}
+    :{utr,amount:expectedAmt,orderId:pendingUpiSession.orderId};
+
    const res=await fetch(VERIFY_WORKER_URL,{
     method:"POST",
     headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-     utr:utr,
-     amount:activePackage.amount,
-     orderId:pendingUpiSession.orderId
-    })
+    body:JSON.stringify(payload)
    });
 
    const data=await res.json();
@@ -1500,13 +1682,28 @@ async function verifyAndSuccessUpi(){
     if(tg&&tg.HapticFeedback)tg.HapticFeedback.notificationOccurred("success");
 
     document.getElementById("upiCheckingView").style.display="none";
-    document.getElementById("upiSuccessSummary").innerText=`₹${activePackage.amount} Verified • UTR: ${utr}`;
-    document.getElementById("upiSuccessView").style.display="block";
 
-    setTimeout(()=>{
-     document.getElementById("upiCheckoutModal").classList.remove("show");
-     proceedToDM(utr);
-    },1600);
+    if(isTopup){
+     setWalletBalanceUI(data.balance);
+     document.getElementById("upiSuccessSummary").innerText=`+₹${data.credited} Added • New Balance: ₹${data.balance}`;
+     document.getElementById("upiSuccessNextHint").innerText="Wallet updated! Returning to Store...";
+     document.getElementById("upiSuccessView").style.display="block";
+
+     setTimeout(()=>{
+      pendingUpiSession=null;
+      document.getElementById("upiCheckoutModal").classList.remove("show");
+      showToast(`✅ ₹${data.credited} Added to Wallet!`);
+     },1600);
+    }else{
+     document.getElementById("upiSuccessSummary").innerText=`₹${expectedAmt} Verified • UTR: ${utr}`;
+     document.getElementById("upiSuccessNextHint").innerText="Opening @vijxzz DM with approval command...";
+     document.getElementById("upiSuccessView").style.display="block";
+
+     setTimeout(()=>{
+      document.getElementById("upiCheckoutModal").classList.remove("show");
+      proceedToDM(utr);
+     },1600);
+    }
     return;
    }
 
@@ -1535,7 +1732,7 @@ function rejectUpiPayment(reasonText="Payment rejected"){
  clearInterval(upiCountdownInterval);
  if(tg&&tg.HapticFeedback)tg.HapticFeedback.notificationOccurred("error");
 
- if(activePackage&&pendingUpiSession){
+ if(activePackage&&pendingUpiSession&&pendingUpiSession.mode!=="topup"){
   const now=new Date();
   const timeStr=now.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
   const orders=getOrders();
