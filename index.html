@@ -444,6 +444,27 @@ select option {background:#111320;color:#fff}
 }
 .verify-pay-btn:disabled {opacity:.6;cursor:not-allowed}
 
+/* CHECKING PAYMENT LOADER & COUNTDOWN */
+.checking-spinner {
+  width:64px;height:64px;border-radius:50%;
+  border:4px solid rgba(0,245,212,.18);
+  border-top-color:#00f5d4;
+  border-right-color:#9d4edd;
+  margin:0 auto 14px;
+  animation:spinLoader 0.9s linear infinite;
+}
+@keyframes spinLoader {to{transform:rotate(360deg)}}
+.checking-countdown-pill {
+  display:inline-block;
+  background:rgba(0,245,212,.14);
+  border:1px solid rgba(0,245,212,.4);
+  color:var(--cyan);
+  font-size:18px;font-weight:900;
+  padding:6px 18px;border-radius:999px;
+  margin:8px 0 10px;
+  font-variant-numeric:tabular-nums;
+}
+
 /* LIVE SUCCESS TICK & REJECTED SCREENS */
 .status-result-screen {
   text-align:center;
@@ -659,15 +680,15 @@ select option {background:#111320;color:#fff}
         <button class="vpa-copy-btn" id="upiCopyBtn" onclick="copyMerchantUpi()">COPY UPI</button>
       </div>
 
-      <a id="directUpiAppBtn" class="upi-app-btn" href="#" onclick="launchDirectUpi(event, 'generic')">
+      <button type="button" id="directUpiAppBtn" class="upi-app-btn" onclick="launchDirectUpi(event, 'default')">
         Pay ₹25 with UPI App ⚡
-      </a>
+      </button>
 
       <div class="direct-apps-grid">
-        <a class="app-chip-btn" id="btnGpay" href="#" onclick="launchDirectUpi(event, 'gpay')">GPay</a>
-        <a class="app-chip-btn" id="btnPhonepe" href="#" onclick="launchDirectUpi(event, 'phonepe')">PhonePe</a>
-        <a class="app-chip-btn" id="btnPaytm" href="#" onclick="launchDirectUpi(event, 'paytm')">Paytm</a>
-        <a class="app-chip-btn" id="btnBhim" href="#" onclick="launchDirectUpi(event, 'bhim')">BHIM</a>
+        <button type="button" class="app-chip-btn" id="btnGpay" onclick="launchDirectUpi(event, 'gpay')">GPay</button>
+        <button type="button" class="app-chip-btn" id="btnPhonepe" onclick="launchDirectUpi(event, 'phonepe')">PhonePe</button>
+        <button type="button" class="app-chip-btn" id="btnPaytm" onclick="launchDirectUpi(event, 'paytm')">Paytm</button>
+        <button type="button" class="app-chip-btn" id="btnBhim" onclick="launchDirectUpi(event, 'bhim')">BHIM</button>
       </div>
 
       <div class="utr-verify-section">
@@ -678,6 +699,17 @@ select option {background:#111320;color:#fff}
           <button class="verify-pay-btn" id="verifyPayBtn" onclick="verifyAndSuccessUpi()">✓ Confirm Paid</button>
         </div>
       </div>
+    </div>
+
+    <!-- CHECKING PAYMENT (60s TIMER) VIEW -->
+    <div id="upiCheckingView" class="status-result-screen" style="display:none;">
+      <div class="checking-spinner"></div>
+      <h3 style="font-size:19px;font-weight:900;color:#fff;margin-bottom:4px;">Checking Payment...</h3>
+      <div class="checking-countdown-pill" id="checkingTimerText">01:00</div>
+      <p id="checkingSubText" style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:14px;">
+        Waiting for Paytm payment confirmation mail...<br>Do not close this screen.
+      </p>
+      <button class="reject-btn" style="width:100%;" onclick="cancelCheckingAndReject()">✕ Cancel Verification</button>
     </div>
 
     <!-- LIVE TICK PAYMENT SUCCESS VIEW -->
@@ -811,7 +843,6 @@ function parseDMY(dateStr){
  return new Date(yyyy,mm-1,dd,0,0,0,0);
 }
 
-/* FIXED PLAN PROGRESS CALCULATION */
 function getPlanProgress(plan){
  const startObj=parseDMY(plan.startDate);
  const now=new Date();
@@ -1024,7 +1055,6 @@ function renderOrders(){
   </div>`).join("");
 }
 
-/* FIXED MY PLANS RENDERING */
 function renderMyPlans(){
  const activePlans=getOrders().filter(o=>o.status==="successful");
  const plansEl=document.getElementById("myPlansContainer");
@@ -1076,6 +1106,9 @@ let activePackage=null;
 let pendingUpiSession=null;
 let upiCountdownInterval=null;
 let upiExpiresAt=0;
+let checkingTimerInterval=null;
+let checkingPollInterval=null;
+let isCheckingAborted=false;
 
 function openCheckout(idx){
  const pkg=PACKAGES[idx];
@@ -1192,7 +1225,7 @@ ${toBold("I WANT TO BUY MAX FF AUTOLIKES:")}
  tg.openTelegramLink(dmUrl);
 }
 
-/* REAL-TIME CLOCK TIMER (WORKS EVEN WHEN MINIMIZED) */
+/* REAL-TIME CLOCK TIMER */
 function updateUpiTimerDisplay(){
  if(!pendingUpiSession||!upiExpiresAt)return;
  const remainingSec=Math.max(0,Math.ceil((upiExpiresAt-Date.now())/1000));
@@ -1220,7 +1253,7 @@ function openUpiCheckout(){
  const orderId="FF"+Math.floor(100000+Math.random()*900000);
  const amountFixed=Number(activePackage.amount).toFixed(2);
  const server=document.getElementById("serverSelect").value;
- const queryStr=`pa=${MERCHANT_UPI_ID}&pn=${encodeURIComponent(MERCHANT_UPI_NAME)}&tr=${orderId}&tn=${orderId}&am=${amountFixed}&cu=INR`;
+ const queryStr=`pa=${encodeURIComponent(MERCHANT_UPI_ID)}&pn=${encodeURIComponent(MERCHANT_UPI_NAME)}&tr=${orderId}&tn=${orderId}&am=${amountFixed}&cu=INR`;
 
  pendingUpiSession={
   orderId,
@@ -1230,6 +1263,7 @@ function openUpiCheckout(){
  };
 
  document.getElementById("upiActiveView").style.display="block";
+ document.getElementById("upiCheckingView").style.display="none";
  document.getElementById("upiSuccessView").style.display="none";
  document.getElementById("upiRejectedView").style.display="none";
  document.getElementById("upiOrderMeta").innerText=`Order #${orderId} • ${activePackage.title}`;
@@ -1238,12 +1272,6 @@ function openUpiCheckout(){
  document.getElementById("upiUtrField").value="";
 
  const genericUri=`upi://pay?${queryStr}`;
- document.getElementById("directUpiAppBtn").href=genericUri;
- document.getElementById("btnGpay").href=`tez://upi/pay?${queryStr}`;
- document.getElementById("btnPhonepe").href=`phonepe://pay?${queryStr}`;
- document.getElementById("btnPaytm").href=`paytmmp://pay?${queryStr}`;
- document.getElementById("btnBhim").href=genericUri;
-
  const qrContainer=document.getElementById("upiQrBox");
  qrContainer.innerHTML="";
  new QRCode(qrContainer,{
@@ -1263,22 +1291,28 @@ function openUpiCheckout(){
 }
 
 function launchDirectUpi(e,appType){
- e.preventDefault();
+ if(e)e.preventDefault();
  if(!pendingUpiSession)return;
  const q=pendingUpiSession.queryStr;
+ const isIOS=/iPhone|iPad|iPod/i.test(navigator.userAgent);
+
  const schemes={
-  generic:`upi://pay?${q}`,
-  gpay:`tez://upi/pay?${q}`,
+  default:isIOS?`paytmmp://pay?${q}`:`upi://pay?${q}`,
+  gpay:`gpay://upi/pay?${q}`,
   phonepe:`phonepe://pay?${q}`,
   paytm:`paytmmp://pay?${q}`,
-  bhim:`upi://pay?${q}`
+  bhim:isIOS?`bhim://upi/pay?${q}`:`upi://pay?${q}`
  };
- const targetUrl=schemes[appType]||schemes.generic;
- try{
-  window.location.href=targetUrl;
- }catch(err){
-  if(tg&&tg.openLink)tg.openLink(targetUrl);
+
+ const targetUrl=schemes[appType]||schemes.default;
+
+ if(tg&&typeof tg.openLink==="function"){
+  try{
+   tg.openLink(targetUrl);
+   return;
+  }catch(err){}
  }
+ window.location.href=targetUrl;
 }
 
 function copyMerchantUpi(){
@@ -1307,6 +1341,20 @@ function saveUsedUtr(utr){
  }
 }
 
+function stopCheckingTimers(){
+ clearInterval(checkingTimerInterval);
+ clearInterval(checkingPollInterval);
+ checkingTimerInterval=null;
+ checkingPollInterval=null;
+}
+
+function cancelCheckingAndReject(){
+ isCheckingAborted=true;
+ stopCheckingTimers();
+ rejectUpiPayment("Verification cancelled by buyer");
+}
+
+/* 60-SECOND CHECKING PAYMENT TIMER + AUTO-POLLING */
 async function verifyAndSuccessUpi(){
  if(!activePackage||!pendingUpiSession)return;
 
@@ -1323,56 +1371,91 @@ async function verifyAndSuccessUpi(){
   return;
  }
 
- const confirmBtn=document.getElementById("verifyPayBtn");
- const oldLabel=confirmBtn.innerText;
- confirmBtn.disabled=true;
- confirmBtn.innerText="Verifying...";
+ isCheckingAborted=false;
+ stopCheckingTimers();
 
- try{
-  const res=await fetch(VERIFY_WORKER_URL,{
-   method:"POST",
-   headers:{"Content-Type":"application/json"},
-   body:JSON.stringify({
-    utr:utr,
-    amount:activePackage.amount,
-    orderId:pendingUpiSession.orderId
-   })
-  });
+ /* Switch to Checking Payment 60s Screen */
+ document.getElementById("upiActiveView").style.display="none";
+ document.getElementById("upiSuccessView").style.display="none";
+ document.getElementById("upiRejectedView").style.display="none";
+ document.getElementById("upiCheckingView").style.display="block";
 
-  const data=await res.json();
+ const checkDurationSec=60;
+ const checkEndsAt=Date.now()+(checkDurationSec*1000);
+ let isFinished=false;
 
-  confirmBtn.disabled=false;
-  confirmBtn.innerText=oldLabel;
+ function updateCheckClock(){
+  const rem=Math.max(0,Math.ceil((checkEndsAt-Date.now())/1000));
+  const mm=String(Math.floor(rem/60)).padStart(2,"0");
+  const ss=String(rem%60).padStart(2,"0");
+  document.getElementById("checkingTimerText").innerText=`${mm}:${ss}`;
 
-  if(!data||data.verified!==true){
-   rejectUpiPayment((data&&data.reason)?data.reason:"Fake or unverified UTR! Payment rejected.");
-   return;
+  if(rem<=0&&!isFinished){
+   isFinished=true;
+   stopCheckingTimers();
+   rejectUpiPayment("Payment not received in Paytm within 60s. Please verify UTR or try again.");
   }
-
-  clearInterval(upiCountdownInterval);
-  saveUsedUtr(utr);
-
-  if(tg.HapticFeedback)tg.HapticFeedback.notificationOccurred("success");
-
-  /* SHOW LIVE TICK PAYMENT SUCCESSFUL SCREEN */
-  document.getElementById("upiActiveView").style.display="none";
-  document.getElementById("upiRejectedView").style.display="none";
-  document.getElementById("upiSuccessSummary").innerText=`₹${activePackage.amount} Verified • UTR: ${utr}`;
-  document.getElementById("upiSuccessView").style.display="block";
-
-  setTimeout(()=>{
-   document.getElementById("upiCheckoutModal").classList.remove("show");
-   proceedToDM(utr);
-  },1600);
-
- }catch(e){
-  confirmBtn.disabled=false;
-  confirmBtn.innerText=oldLabel;
-  rejectUpiPayment("Verification server unreachable. Payment rejected.");
  }
+
+ async function checkWorkerOnce(){
+  if(isFinished||isCheckingAborted||!pendingUpiSession)return;
+  try{
+   const res=await fetch(VERIFY_WORKER_URL,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+     utr:utr,
+     amount:activePackage.amount,
+     orderId:pendingUpiSession.orderId
+    })
+   });
+
+   const data=await res.json();
+   if(isFinished||isCheckingAborted)return;
+
+   if(data&&data.verified===true){
+    isFinished=true;
+    stopCheckingTimers();
+    clearInterval(upiCountdownInterval);
+    saveUsedUtr(utr);
+
+    if(tg.HapticFeedback)tg.HapticFeedback.notificationOccurred("success");
+
+    document.getElementById("upiCheckingView").style.display="none";
+    document.getElementById("upiSuccessSummary").innerText=`₹${activePackage.amount} Verified • UTR: ${utr}`;
+    document.getElementById("upiSuccessView").style.display="block";
+
+    setTimeout(()=>{
+     document.getElementById("upiCheckoutModal").classList.remove("show");
+     proceedToDM(utr);
+    },1600);
+    return;
+   }
+
+   const reason=(data&&data.reason)?data.reason:"Payment not found";
+   const waitingForSync=reason.toLowerCase().includes("not found");
+
+   /* If wrong amount or already used on server, fail immediately; if not found yet, keep checking until 60s ends */
+   if(!waitingForSync){
+    isFinished=true;
+    stopCheckingTimers();
+    rejectUpiPayment(reason);
+   }
+  }catch(e){
+   /* Network hiccup: keep retrying until 60s timer finishes */
+  }
+ }
+
+ updateCheckClock();
+ checkingTimerInterval=setInterval(updateCheckClock,1000);
+
+ /* Run first check immediately, then every 5 seconds until 60s finishes */
+ checkWorkerOnce();
+ checkingPollInterval=setInterval(checkWorkerOnce,5000);
 }
 
 function rejectUpiPayment(reasonText="Payment rejected"){
+ stopCheckingTimers();
  clearInterval(upiCountdownInterval);
  if(tg.HapticFeedback)tg.HapticFeedback.notificationOccurred("error");
 
@@ -1399,16 +1482,17 @@ function rejectUpiPayment(reasonText="Payment rejected"){
  pendingUpiSession=null;
 
  document.getElementById("upiActiveView").style.display="none";
+ document.getElementById("upiCheckingView").style.display="none";
  document.getElementById("upiSuccessView").style.display="none";
  document.getElementById("upiRejectedView").style.display="block";
- document.getElementById("upiRejectedReason").innerText=`${reasonText}. Returning to main Store page...`;
+ document.getElementById("upiRejectedReason").innerText=`${reasonText} Returning to Store...`;
 
  setTimeout(()=>{
   document.getElementById("upiCheckoutModal").classList.remove("show");
   const storeTabBtn=document.querySelectorAll(".tab-btn")[0];
   switchTab("store",storeTabBtn);
   showToast("❌ Payment Rejected!");
- },1600);
+ },1800);
 }
 
 /* Automatically refresh progress every 30 seconds */
