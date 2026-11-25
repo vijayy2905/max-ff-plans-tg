@@ -1054,16 +1054,6 @@ function getPlanProgress(plan){
  };
 }
 
-function toBold(str){
- const normal="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
- const bold="𝗔𝗕𝗖𝗗𝗘𝗙𝗚𝗛𝗜𝗝𝗞𝗟𝗠𝗡𝗢𝗣𝗤𝗥𝗦𝗧𝗨𝗩𝗪𝗫𝗬𝗭𝗮𝗯𝗰𝗱𝗲𝗳𝗴𝗵𝗶𝗷𝗸𝗹𝗺𝗻𝗼𝗽𝗾𝗿𝘀𝘁𝘂𝘃𝘄𝘅𝘆𝘇𝟬𝟭𝟮𝟯𝟰𝟱𝟲𝟳𝟴𝟵";
- const boldChars=[...bold];
- return String(str).split("").map(ch=>{
-  const idx=normal.indexOf(ch);
-  return idx!==-1?boldChars[idx]:ch;
- }).join("");
-}
-
 function formatPrice(amount){
  const mode=document.getElementById("paymentSelect").value;
  return mode==="STARS"?`${amount} ⭐️`:`₹${amount}`;
@@ -1284,7 +1274,6 @@ function startWalletTopupUpi(){
 
  const topupId="WT"+Math.floor(100000+Math.random()*900000);
  const amountFixed=amt.toFixed(2);
- // Clean personal P2P UPI query (no tr=/tn= so iOS apps don't reject @fam)
  const queryStr=`pa=${MERCHANT_UPI_ID}&pn=${encodeURIComponent(MERCHANT_UPI_NAME)}&am=${amountFixed}&cu=INR`;
 
  pendingUpiSession={
@@ -1439,28 +1428,34 @@ function proceedToDM(verifiedUtr="",customPaymentLabel=""){
  closeCheckout();
 
  const adminCmd=`/approve ${buyer.id} ${activePackage.days} ${orderId}`;
- const utrLine=verifiedUtr?`\n🔢 ${toBold("REF / UTR:")} ${toBold(verifiedUtr)}`:"";
+ const utrLine=verifiedUtr?`\nREF / UTR: ${verifiedUtr}`:"";
 
- const orderText=`❤️‍🔥 ${toBold("HELLO")} @${ADMIN_USERNAME} 👋
+ const orderText=`HELLO @${ADMIN_USERNAME}
 
-${toBold("I WANT TO BUY MAX FF AUTOLIKES:")}
+I WANT TO BUY MAX FF AUTOLIKES:
 
-🧾 ${toBold("ORDER ID:")} #${toBold(orderId)}
-👤 ${toBold("NAME:")} ${toBold(buyer.name)} (${buyer.username})
-🆔 ${toBold("TG ID:")} ${toBold(buyer.id)}
-📦 ${toBold("PLAN:")} ${toBold(activePackage.days+" Days")} — ${toBold(activePackage.likes+" Likes")} (220/Day)
-📅 ${toBold("STARTS:")} ${toBold(nextDay)} (Next Day)
-💰 ${toBold("PRICE:")} ${toBold(formattedPrice)}
-🌍 ${toBold("SERVER:")} ${toBold(server)}
-💳 ${toBold("PAYMENT:")} ${toBold(paymentLabel)}${utrLine}
-🤖 ${toBold("BOT:")} ${BOT_USERNAME}
-⏰ ${toBold("TIME:")} ${toBold(timeStr)}
+ORDER ID: #${orderId}
+NAME: ${buyer.name} (${buyer.username})
+TG ID: ${buyer.id}
+PLAN: ${activePackage.days} Days - ${activePackage.likes} Likes (220/Day)
+STARTS: ${nextDay} (Next Day)
+PRICE: ${formattedPrice}
+SERVER: ${server}
+PAYMENT: ${paymentLabel}${utrLine}
+BOT: ${BOT_USERNAME}
+TIME: ${timeStr}
 
-⚡ ${toBold("ADMIN COMMAND:")}
-\`${adminCmd}\``;
+ADMIN COMMAND:
+${adminCmd}`;
+
+ if(navigator.clipboard&&navigator.clipboard.writeText){
+  navigator.clipboard.writeText(orderText).catch(()=>{});
+ }
 
  pendingUpiSession=null;
  const dmUrl=`https://t.me/${ADMIN_USERNAME}?text=${encodeURIComponent(orderText)}`;
+ showToast("📋 Order copied! Opening @vijxzz...");
+
  if(tg&&tg.openTelegramLink){
   tg.openTelegramLink(dmUrl);
  }else{
@@ -1556,7 +1551,6 @@ function openUpiCheckout(){
  const orderId="FF"+Math.floor(100000+Math.random()*900000);
  const amountFixed=Number(activePackage.amount).toFixed(2);
  const server=document.getElementById("serverSelect").value;
- // Clean personal P2P UPI query (no tr=/tn= so iOS apps don't reject @fam)
  const queryStr=`pa=${MERCHANT_UPI_ID}&pn=${encodeURIComponent(MERCHANT_UPI_NAME)}&am=${amountFixed}&cu=INR`;
 
  pendingUpiSession={
@@ -1577,7 +1571,6 @@ function launchDirectUpi(e,appType){
  const links=getUpiSchemes(pendingUpiSession.queryStr);
  const targetUrl=links[appType]||links.default;
 
- // Telegram iOS WebView requires tg.openLink or synchronous <a> click for custom schemes
  if(tg&&typeof tg.openLink==="function"){
   try{
    tg.openLink(targetUrl);
@@ -1653,9 +1646,7 @@ function cancelCheckingAndReject(){
  rejectUpiPayment("Verification cancelled by buyer");
 }
 
-/* 60-SECOND CHECKING PAYMENT TIMER + REAL FAMPAY GMAIL SYNC VERIFICATION
-   - Unused UTRs remain valid and reusable for a matching-amount purchase/top-up
-   - Already-used UTRs fail instantly */
+/* 60-SECOND CHECKING PAYMENT TIMER + REAL FAMPAY GMAIL SYNC VERIFICATION */
 async function verifyAndSuccessUpi(){
  if(!pendingUpiSession)return;
 
@@ -1672,7 +1663,6 @@ async function verifyAndSuccessUpi(){
  isCheckingAborted=false;
  stopCheckingTimers();
 
- /* Switch to Checking Payment 60s Screen */
  document.getElementById("upiActiveView").style.display="none";
  document.getElementById("upiSuccessView").style.display="none";
  document.getElementById("upiRejectedView").style.display="none";
@@ -1749,7 +1739,6 @@ async function verifyAndSuccessUpi(){
    const reason=(data&&(data.error||data.reason))?(data.error||data.reason):"Payment not found";
    const lowerReason=reason.toLowerCase();
 
-   // Instant fail if UTR is already used
    if(data?.instantFail===true||lowerReason.includes("already used")||lowerReason.includes("already been used")){
     isFinished=true;
     stopCheckingTimers();
@@ -1757,16 +1746,13 @@ async function verifyAndSuccessUpi(){
     return;
    }
 
-   // Wait & retry while UTR hasn't synced yet; reject immediately for amount mismatch or invalid format
    const waitingForSync=lowerReason.includes("not found");
    if(!waitingForSync){
     isFinished=true;
     stopCheckingTimers();
     rejectUpiPayment(reason);
    }
-  }catch(e){
-   /* Network hiccup: keep retrying until 60s timer finishes */
-  }
+  }catch(e){}
  }
 
  updateCheckClock();
