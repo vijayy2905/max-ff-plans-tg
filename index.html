@@ -189,8 +189,22 @@ button,select,a {touch-action:manipulation}
   letter-spacing:.06em;margin-bottom:5px;
 }
 select {
-  width:100%;background:transparent;color:#fff;
-  border:none;font-size:12.5px;font-weight:700;outline:none;cursor:pointer;
+  width:100%;
+  background-color:transparent;
+  color:#ffffff;
+  border:none;
+  font-size:12.5px;
+  font-weight:700;
+  outline:none;
+  cursor:pointer;
+  appearance:none;
+  -webkit-appearance:none;
+  -moz-appearance:none;
+  padding-right:22px;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'><polyline points='7 9 12 4 17 9'/><polyline points='7 15 12 20 17 15'/></svg>");
+  background-repeat:no-repeat;
+  background-position:right 0px center;
+  background-size:14px 14px;
 }
 select option {background:#111320;color:#fff}
 .plans-container {display:flex;flex-direction:column;gap:10px}
@@ -244,7 +258,6 @@ select option {background:#111320;color:#fff}
 }
 .price-tag {display:block;font-size:19px;font-weight:900;color:#fbbf24;line-height:1.1}
 .price-tag.star-mode {color:#38bdf8}
-.price-tag.wallet-mode {color:var(--cyan)}
 .empty-state {
   background:linear-gradient(145deg,var(--surface),var(--surface-2));
   border:1px dashed rgba(255,255,255,.14);
@@ -364,6 +377,25 @@ select option {background:#111320;color:#fff}
 }
 .dm-btn:active {transform:scale(.985)}
 .dm-btn:disabled {opacity:.6;cursor:not-allowed}
+
+.wallet-pay-btn {
+  width:100%;
+  background:linear-gradient(135deg,#00f5d4,#10b981);
+  color:#04130e;
+  border:none;
+  border-radius:16px;
+  padding:14px;
+  font-size:14.5px;
+  font-weight:900;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  margin-bottom:9px;
+}
+.wallet-pay-btn:active {transform:scale(.985)}
+.wallet-pay-btn:disabled {opacity:.6;cursor:not-allowed}
 
 /* ADD BALANCE QUICK CHIPS */
 .topup-chips {
@@ -493,7 +525,7 @@ select option {background:#111320;color:#fff}
   font-variant-numeric:tabular-nums;
 }
 
-/* LIVE SUCCESS TICK & REJECTED SCREENS */
+/* LIVE TICK PAYMENT SUCCESS & REJECTED SCREENS */
 .status-result-screen {text-align:center;padding:26px 10px 14px}
 .success-tick-wrap {width:72px;height:72px;margin:0 auto 14px}
 .success-circle {
@@ -622,7 +654,6 @@ select option {background:#111320;color:#fff}
       <div class="input-group">
         <label>Payment Method</label>
         <select id="paymentSelect" onchange="renderPackages()">
-          <option value="WALLET">Wallet Balance 👛</option>
           <option value="UPI">UPI (IND 🇮🇳)</option>
           <option value="STARS">Telegram Stars ⭐️</option>
         </select>
@@ -705,12 +736,28 @@ select option {background:#111320;color:#fff}
       <div class="receipt-row total"><span>Total Payable</span><strong id="recPrice"></strong></div>
     </div>
     <p id="confirmHintText" style="text-align:center;font-size:11px;color:var(--muted);margin-bottom:14px;">
-      Tap below to pay instantly using your Wallet Balance.
+      Available Wallet Balance: <b>₹0</b>. Pay instantly via Wallet or UPI.
     </p>
-    <button class="dm-btn" id="confirmActionBtn" onclick="handleConfirmAction()">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-      <span id="confirmBtnLabel">Pay via Wallet</span>
-    </button>
+
+    <!-- BOTH WALLET & UPI BUTTONS FOR INR PACKAGES -->
+    <div id="inrPayButtonsWrap">
+      <button class="wallet-pay-btn" id="walletPayBtn" onclick="payWithWallet()">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+        <span id="walletPayBtnLabel">Pay ₹0 from Wallet</span>
+      </button>
+      <button class="dm-btn" id="upiPayBtn" onclick="openUpiCheckout()">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        <span id="upiPayBtnLabel">Pay ₹0 via UPI</span>
+      </button>
+    </div>
+
+    <!-- STARS BUTTON -->
+    <div id="starsPayButtonWrap" style="display:none;">
+      <button class="dm-btn" onclick="proceedToDM()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        <span>Buy Now via @vijxzz</span>
+      </button>
+    </div>
   </div>
 </div>
 
@@ -1022,16 +1069,14 @@ function formatPrice(amount){
  return mode==="STARS"?`${amount} ⭐️`:`₹${amount}`;
 }
 
-function getPaymentLabel(){
+function getPaymentLabel(overrideLabel=""){
+ if(overrideLabel)return overrideLabel;
  const mode=document.getElementById("paymentSelect").value;
- if(mode==="WALLET")return "Wallet Balance 👛";
  return mode==="STARS"?"Telegram Stars ⭐️":"UPI (IND 🇮🇳)";
 }
 
 function renderPackages(){
- const mode=document.getElementById("paymentSelect").value;
- const isStars=mode==="STARS";
- const isWallet=mode==="WALLET";
+ const isStars=document.getElementById("paymentSelect").value==="STARS";
  const demoLocked=isDemoLocked();
  const container=document.getElementById("plansContainer");
  container.innerHTML="";
@@ -1054,7 +1099,7 @@ function renderPackages(){
     </div>
     <div class="plan-right">
      <span class="days-pill">${pkg.days} ${pkg.days===1?"DAY":"DAYS"}</span>
-     <span class="price-tag ${isStars?"star-mode":(isWallet?"wallet-mode":"")}">${priceDisplay}</span>
+     <span class="price-tag ${isStars?"star-mode":""}">${priceDisplay}</span>
     </div>
    </div>`;
  });
@@ -1263,7 +1308,7 @@ function openCheckout(idx){
  activePackage=pkg;
  const mode=document.getElementById("paymentSelect").value;
  const server=document.getElementById("serverSelect").value;
- const paymentLabel=getPaymentLabel();
+ const paymentLabel=mode==="STARS"?"Telegram Stars ⭐️":"Wallet / UPI (IND 🇮🇳)";
  const formattedPrice=formatPrice(activePackage.amount);
 
  document.getElementById("modalSubtitle").innerText=`${activePackage.days} Days • ${activePackage.likes} Total Likes`;
@@ -1272,15 +1317,16 @@ function openCheckout(idx){
  document.getElementById("recPayment").innerText=paymentLabel;
  document.getElementById("recPrice").innerText=formattedPrice;
 
- if(mode==="WALLET"){
-  document.getElementById("confirmHintText").innerHTML=`Available Wallet Balance: <b>₹${walletBalance}</b>. Instant deduction &amp; DM order receipt.`;
-  document.getElementById("confirmBtnLabel").innerText=`Pay ₹${activePackage.amount} from Wallet`;
- }else if(mode==="STARS"){
+ if(mode==="STARS"){
   document.getElementById("confirmHintText").innerHTML=`Tap below to open DM with <b>@vijxzz</b>. Send Telegram Stars &amp; wait for Admin confirmation.`;
-  document.getElementById("confirmBtnLabel").innerText=`Buy Now via @vijxzz`;
+  document.getElementById("inrPayButtonsWrap").style.display="none";
+  document.getElementById("starsPayButtonWrap").style.display="block";
  }else{
-  document.getElementById("confirmHintText").innerHTML=`Tap below to open <b>UPI Payment Checkout</b>. DM approval link unlocks only after Paytm UPI verifies your UTR.`;
-  document.getElementById("confirmBtnLabel").innerText=`Proceed to Pay ₹${activePackage.amount}`;
+  document.getElementById("confirmHintText").innerHTML=`Available Wallet Balance: <b>₹${walletBalance}</b>. Pay via Wallet or UPI.`;
+  document.getElementById("walletPayBtnLabel").innerText=`Pay ₹${activePackage.amount} from Wallet`;
+  document.getElementById("upiPayBtnLabel").innerText=`Pay ₹${activePackage.amount} via UPI`;
+  document.getElementById("inrPayButtonsWrap").style.display="block";
+  document.getElementById("starsPayButtonWrap").style.display="none";
  }
 
  document.getElementById("checkoutModal").classList.add("show");
@@ -1292,17 +1338,6 @@ function closeCheckout(){
 
 function handleBackdropClick(e){
  if(e.target.id==="checkoutModal")closeCheckout();
-}
-
-async function handleConfirmAction(){
- const mode=document.getElementById("paymentSelect").value;
- if(mode==="WALLET"){
-  await payWithWallet();
- }else if(mode==="STARS"){
-  proceedToDM();
- }else{
-  openUpiCheckout();
- }
 }
 
 async function payWithWallet(){
@@ -1319,8 +1354,8 @@ async function payWithWallet(){
   return;
  }
 
- const btn=document.getElementById("confirmActionBtn");
- const label=document.getElementById("confirmBtnLabel");
+ const btn=document.getElementById("walletPayBtn");
+ const label=document.getElementById("walletPayBtnLabel");
  btn.disabled=true;
  label.innerText="Deducting Wallet...";
 
@@ -1353,7 +1388,7 @@ async function payWithWallet(){
 
   pendingUpiSession={orderId};
   btn.disabled=false;
-  proceedToDM("WALLET-PAID");
+  proceedToDM("WALLET-PAID","Wallet Balance 👛");
  }catch(err){
   btn.disabled=false;
   label.innerText=`Pay ₹${activePackage.amount} from Wallet`;
@@ -1362,7 +1397,7 @@ async function payWithWallet(){
 }
 
 /* STARS, WALLET & VERIFIED UPI DM FLOW */
-function proceedToDM(verifiedUtr=""){
+function proceedToDM(verifiedUtr="",customPaymentLabel=""){
  if(!activePackage)return;
 
  if(activePackage.isDemo&&isDemoLocked()){
@@ -1372,7 +1407,7 @@ function proceedToDM(verifiedUtr=""){
  }
 
  const server=document.getElementById("serverSelect").value;
- const paymentLabel=getPaymentLabel();
+ const paymentLabel=getPaymentLabel(customPaymentLabel);
  const formattedPrice=formatPrice(activePackage.amount);
  const now=new Date();
  const timeStr=now.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
@@ -1701,7 +1736,7 @@ async function verifyAndSuccessUpi(){
 
      setTimeout(()=>{
       document.getElementById("upiCheckoutModal").classList.remove("show");
-      proceedToDM(utr);
+      proceedToDM(utr,"UPI (IND 🇮🇳)");
      },1600);
     }
     return;
