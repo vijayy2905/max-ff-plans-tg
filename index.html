@@ -691,7 +691,7 @@ select option {background:#111320;color:#fff}
     <div class="drag-pill"></div>
     <div class="sheet-header">
       <div>
-        <h2>Add Wallet Balance 👛</h2>
+        <h2>Add Wallet Balance 💵</h2>
         <div class="sheet-sub">Instant UPI Top-Up • Min ₹10</div>
       </div>
       <button class="close-modal" onclick="closeTopupModal()">✕</button>
@@ -1253,7 +1253,7 @@ let checkingTimerInterval=null;
 let checkingPollInterval=null;
 let isCheckingAborted=false;
 
-/* WALLET ADD BALANCE FLOW (MIN ₹10, NO ORDER ID IN UPI URI) */
+/* WALLET ADD BALANCE FLOW (MIN ₹10) */
 function openTopupModal(){
  if(!buyer.id||buyer.id==="Unknown"){
   showToast("⚠️ Open inside Telegram Mini App to use Wallet!");
@@ -1284,7 +1284,7 @@ function startWalletTopupUpi(){
 
  const topupId="WT"+Math.floor(100000+Math.random()*900000);
  const amountFixed=amt.toFixed(2);
- const queryStr=`pa=${MERCHANT_UPI_ID}&pn=${encodeURIComponent(MERCHANT_UPI_NAME)}&am=${amountFixed}&cu=INR`;
+ const queryStr=`pa=${MERCHANT_UPI_ID}&pn=${encodeURIComponent(MERCHANT_UPI_NAME)}&tr=${topupId}&tn=${topupId}&am=${amountFixed}&cu=INR`;
 
  pendingUpiSession={
   mode:"topup",
@@ -1388,7 +1388,7 @@ async function payWithWallet(){
 
   pendingUpiSession={orderId};
   btn.disabled=false;
-  proceedToDM("WALLET-PAID","Wallet Balance 👛");
+  proceedToDM("WALLET-PAID","Wallet Balance 💵");
  }catch(err){
   btn.disabled=false;
   label.innerText=`Pay ₹${activePackage.amount} from Wallet`;
@@ -1396,7 +1396,7 @@ async function payWithWallet(){
  }
 }
 
-/* STARS, WALLET & VERIFIED UPI DM FLOW (FF ORDER ID ONLY FOR PLAN & /approve) */
+/* STARS, WALLET & VERIFIED UPI DM FLOW */
 function proceedToDM(verifiedUtr="",customPaymentLabel=""){
  if(!activePackage)return;
 
@@ -1548,7 +1548,7 @@ function renderUpiModalUI(headingText,metaText,amount,queryStr){
  document.getElementById("upiCheckoutModal").classList.add("show");
 }
 
-/* DIRECT ORDER UPI CHECKOUT FLOW (NO ORDER ID IN UPI URI) */
+/* DIRECT ORDER UPI CHECKOUT FLOW */
 function openUpiCheckout(){
  if(!activePackage)return;
  closeCheckout();
@@ -1556,7 +1556,7 @@ function openUpiCheckout(){
  const orderId="FF"+Math.floor(100000+Math.random()*900000);
  const amountFixed=Number(activePackage.amount).toFixed(2);
  const server=document.getElementById("serverSelect").value;
- const queryStr=`pa=${MERCHANT_UPI_ID}&pn=${encodeURIComponent(MERCHANT_UPI_NAME)}&am=${amountFixed}&cu=INR`;
+ const queryStr=`pa=${MERCHANT_UPI_ID}&pn=${encodeURIComponent(MERCHANT_UPI_NAME)}&tr=${orderId}&tn=${orderId}&am=${amountFixed}&cu=INR`;
 
  pendingUpiSession={
   mode:"order",
