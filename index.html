@@ -98,6 +98,7 @@ button,select,a {touch-action:manipulation}
   background:rgba(255,255,255,.04);
   border:1px solid var(--border);border-radius:999px;
   padding:4px 10px 4px 5px;display:flex;align-items:center;gap:7px;
+  cursor:pointer;
 }
 .avatar {
   width:24px;height:24px;border-radius:50%;
@@ -580,7 +581,7 @@ select option {background:#111320;color:#fff}
     </div>
     <div class="header-right">
       <div class="status-pill"><span class="pulse-dot"></span> Server Online</div>
-      <div class="user-card">
+      <div class="user-card" title="Tap to set TG ID">
         <div class="avatar" id="userAvatar">FF</div>
         <div class="user-meta">
           <h4 id="userName">FF Player</h4>
@@ -740,7 +741,6 @@ select option {background:#111320;color:#fff}
       Available Wallet Balance: <b>₹0</b>. Pay via Wallet or UPI.
     </p>
 
-    <!-- BOTH WALLET & UPI BUTTONS FOR INR PACKAGES -->
     <div id="inrPayButtonsWrap">
       <button class="wallet-pay-btn" id="walletPayBtn" onclick="payWithWallet()">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
@@ -752,7 +752,6 @@ select option {background:#111320;color:#fff}
       </button>
     </div>
 
-    <!-- STARS BUTTON -->
     <div id="starsPayButtonWrap" style="display:none;">
       <button class="dm-btn" onclick="proceedToDM()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
@@ -762,12 +761,11 @@ select option {background:#111320;color:#fff}
   </div>
 </div>
 
-<!-- UPI PAYMENT CHECKOUT MODAL (USED FOR BOTH ORDERS & WALLET TOP-UP) -->
+<!-- UPI PAYMENT CHECKOUT MODAL -->
 <div class="modal-backdrop" id="upiCheckoutModal">
   <div class="bottom-sheet">
     <div class="drag-pill"></div>
 
-    <!-- ACTIVE PAYMENT VIEW -->
     <div id="upiActiveView">
       <div class="sheet-header">
         <div>
@@ -818,7 +816,6 @@ select option {background:#111320;color:#fff}
       </div>
     </div>
 
-    <!-- CHECKING PAYMENT (60s TIMER) VIEW -->
     <div id="upiCheckingView" class="status-result-screen" style="display:none;">
       <div class="checking-spinner"></div>
       <h3 style="font-size:19px;font-weight:900;color:#fff;margin-bottom:4px;">Checking Payment...</h3>
@@ -829,7 +826,6 @@ select option {background:#111320;color:#fff}
       <button class="reject-btn" style="width:100%;" onclick="cancelCheckingAndReject()">✕ Cancel Verification</button>
     </div>
 
-    <!-- LIVE TICK PAYMENT SUCCESS VIEW -->
     <div id="upiSuccessView" class="status-result-screen" style="display:none;">
       <div class="success-tick-wrap">
         <svg viewBox="0 0 52 52" width="72" height="72">
@@ -846,7 +842,6 @@ select option {background:#111320;color:#fff}
       </button>
     </div>
 
-    <!-- PAYMENT REJECTED VIEW -->
     <div id="upiRejectedView" class="status-result-screen" style="display:none;">
       <div class="rejected-icon">✕</div>
       <h3 style="font-size:19px;font-weight:900;color:#f87171;margin-bottom:6px;">Payment Rejected</h3>
@@ -892,21 +887,71 @@ if(tg){
  tg.expand();
 }
 
+const urlParamsGlobal=new URLSearchParams(window.location.search);
+
 let buyer={name:"FF Player",username:"Not Set",rawUsername:"",id:"Unknown"};
 
-if(tg&&tg.initDataUnsafe&&tg.initDataUnsafe.user){
- const u=tg.initDataUnsafe.user;
- buyer.name=[u.first_name,u.last_name].filter(Boolean).join(" ");
- buyer.rawUsername=(u.username||"").toLowerCase();
- buyer.username=u.username?`@${u.username}`:"No Username";
- buyer.id=u.id;
+function hydrateBuyerInfo(){
+ let resolvedName="";
+ let resolvedUsername="";
+ let resolvedId="";
+
+ if(tg&&tg.initDataUnsafe&&tg.initDataUnsafe.user){
+  const u=tg.initDataUnsafe.user;
+  resolvedName=[u.first_name,u.last_name].filter(Boolean).join(" ").trim();
+  resolvedUsername=(u.username||"").replace(/^@/,"").trim();
+  resolvedId=u.id?String(u.id).trim():"";
+ }
+
+ const paramId=(urlParamsGlobal.get("tg_id")||urlParamsGlobal.get("uid")||"").trim();
+ const paramName=(urlParamsGlobal.get("tg_name")||urlParamsGlobal.get("name")||"").trim();
+ const paramUser=(urlParamsGlobal.get("tg_user")||urlParamsGlobal.get("username")||"").replace(/^@/,"").trim();
+
+ const savedId=(localStorage.getItem("maxff_known_tg_id")||"").trim();
+ const savedName=(localStorage.getItem("maxff_known_tg_name")||"").trim();
+ const savedUser=(localStorage.getItem("maxff_known_tg_user")||"").replace(/^@/,"").trim();
+
+ if(resolvedId&&/^\d+$/.test(resolvedId))localStorage.setItem("maxff_known_tg_id",resolvedId);
+ if(resolvedName)localStorage.setItem("maxff_known_tg_name",resolvedName);
+ if(resolvedUsername)localStorage.setItem("maxff_known_tg_user",resolvedUsername);
+
+ const finalId=(resolvedId&&/^\d+$/.test(resolvedId))
+  ?resolvedId
+  :((paramId&&/^\d+$/.test(paramId))?paramId:((savedId&&/^\d+$/.test(savedId))?savedId:"Unknown"));
+
+ const finalName=resolvedName||paramName||savedName||"FF Player";
+ const finalRawUser=(resolvedUsername||paramUser||savedUser||"").toLowerCase();
+ const finalUserLabel=finalRawUser?`@${finalRawUser}`:"Not Set";
+
+ buyer={
+  name:finalName,
+  username:finalUserLabel,
+  rawUsername:finalRawUser,
+  id:finalId
+ };
+
+ document.getElementById("userName").innerText=buyer.name;
+ document.getElementById("userId").innerText=`TG ID: ${buyer.id}`;
+ document.getElementById("userAvatar").innerText=buyer.name.slice(0,2).toUpperCase();
 }
 
-const isAdmin=buyer.rawUsername===ADMIN_USERNAME.toLowerCase();
+hydrateBuyerInfo();
 
-document.getElementById("userName").innerText=buyer.name;
-document.getElementById("userId").innerText=`TG ID: ${buyer.id}`;
-document.getElementById("userAvatar").innerText=buyer.name.slice(0,2).toUpperCase();
+document.querySelector(".user-card").addEventListener("click",()=>{
+ const currentVal=buyer.id==="Unknown"?"":buyer.id;
+ const entered=window.prompt("Enter Telegram User ID:",currentVal);
+ if(entered===null)return;
+ const digits=entered.replace(/\D/g,"").trim();
+ if(!digits){
+  showToast("Enter a valid numeric Telegram ID");
+  return;
+ }
+ localStorage.setItem("maxff_known_tg_id",digits);
+ hydrateBuyerInfo();
+ showToast(`Saved TG ID: ${digits}`);
+});
+
+const isAdmin=buyer.rawUsername===ADMIN_USERNAME.toLowerCase();
 
 let walletBalance=Number(localStorage.getItem(`maxff_wallet_${buyer.id}`)||0);
 
@@ -1142,8 +1187,7 @@ function saveOrders(orders){
 }
 
 function checkActivationLink(){
- const urlParams=new URLSearchParams(window.location.search);
- const startParam=(tg&&tg.initDataUnsafe&&tg.initDataUnsafe.start_param)||urlParams.get("approve");
+ const startParam=(tg&&tg.initDataUnsafe&&tg.initDataUnsafe.start_param)||urlParamsGlobal.get("approve");
 
  if(startParam){
   const cleanId=startParam.replace("#","").trim().toUpperCase();
@@ -1183,9 +1227,52 @@ function updateOrderStatus(orderId,newStatus){
  }
 }
 
-/* BUILD EXACT SCREENSHOT DM PROMPT */
+let dmLaunchLock=false;
+
+function copyTextSafe(text){
+ try{
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+   navigator.clipboard.writeText(text).catch(()=>{});
+  }
+ }catch(e){}
+}
+
+function openDmWithText(promptText){
+ if(dmLaunchLock)return;
+ dmLaunchLock=true;
+ setTimeout(()=>{dmLaunchLock=false;},700);
+
+ copyTextSafe(promptText);
+
+ const encoded=encodeURIComponent(promptText);
+ const httpsUrl=`https://t.me/${ADMIN_USERNAME}?text=${encoded}`;
+ const nativeUrl=`tg://resolve?domain=${ADMIN_USERNAME}&text=${encoded}`;
+
+ showToast("Opening @vijxzz DM (copied to clipboard too)");
+
+ try{
+  if(tg&&typeof tg.openTelegramLink==="function"){
+   tg.openTelegramLink(httpsUrl);
+   return;
+  }
+ }catch(e){}
+
+ try{
+  window.location.href=nativeUrl;
+  setTimeout(()=>{
+   if(!document.hidden){
+    window.open(httpsUrl,"_blank","noopener,noreferrer");
+   }
+  },300);
+ }catch(e){
+  window.open(httpsUrl,"_blank","noopener,noreferrer");
+ }
+}
+
 function buildOrderDmText(order){
+ hydrateBuyerInfo();
  const ffId=normalizeFfOrderId(order.id);
+ const dayLabel=`${order.days} ${order.days===1?"Day":"Days"}`;
  const adminCmd=`/approve ${buyer.id} ${order.days} ${ffId}`;
  const timeOnly=order.timeOnly||(order.date?order.date.split(" ").slice(-2).join(" "):new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}));
 
@@ -1196,7 +1283,7 @@ ${toBold("I WANT TO BUY MAX FF AUTOLIKES:")}
 🧾 ${toBold("ORDER ID:")} #${toBold(ffId)}
 👤 ${toBold("NAME:")} ${toBold(buyer.name)} (${buyer.username})
 🆔 ${toBold("TG ID:")} ${toBold(buyer.id)}
-📦 ${toBold("PLAN:")} ${toBold(order.days+" "+(order.days===1?"Day":"Days"))} — ${toBold(order.likes+" Likes")} (220/Day)
+📦 ${toBold("PLAN:")} ${toBold(dayLabel)} — ${toBold(order.likes+" Likes")} (220/Day)
 📅 ${toBold("STARTS:")} ${toBold(order.startDate)} (Next Day)
 💰 ${toBold("PRICE:")} ${toBold(order.price)}
 🌍 ${toBold("SERVER:")} ${toBold(order.server)}
@@ -1209,30 +1296,20 @@ ${adminCmd}`;
 }
 
 function sendPromptToAdminDm(order){
- const promptText=buildOrderDmText(order);
- if(navigator.clipboard&&navigator.clipboard.writeText){
-  navigator.clipboard.writeText(promptText).catch(()=>{});
- }
- showToast("📋 Order prompt copied! Opening @vijxzz...");
- const dmUrl=`https://t.me/${ADMIN_USERNAME}?text=${encodeURIComponent(promptText)}`;
- if(tg&&tg.openTelegramLink){
-  tg.openTelegramLink(dmUrl);
- }else{
-  window.location.href=dmUrl;
- }
+ if(!order)return;
+ openDmWithText(buildOrderDmText(order));
 }
 
 function openOrderDmById(orderId){
- const orders=getOrders();
- const found=orders.find(o=>normalizeFfOrderId(o.id)===normalizeFfOrderId(orderId));
- if(found){
-  sendPromptToAdminDm(found);
- }
+ const found=getOrders().find(o=>normalizeFfOrderId(o.id)===normalizeFfOrderId(orderId));
+ if(found)sendPromptToAdminDm(found);
 }
 
 let lastCreatedOrder=null;
+
 function openSavedOrderDm(){
  if(lastCreatedOrder){
+  document.getElementById("upiCheckoutModal").classList.remove("show");
   sendPromptToAdminDm(lastCreatedOrder);
  }
 }
@@ -1345,8 +1422,9 @@ let isCheckingAborted=false;
 
 /* WALLET ADD BALANCE FLOW (MIN ₹10) */
 function openTopupModal(){
+ hydrateBuyerInfo();
  if(!buyer.id||buyer.id==="Unknown"){
-  showToast("⚠️ Open inside Telegram Mini App to use Wallet!");
+  showToast("⚠️ Tap TG ID badge or open inside Telegram to use Wallet!");
   return;
  }
  document.getElementById("topupAmountInput").value="10";
@@ -1432,8 +1510,9 @@ function handleBackdropClick(e){
 
 async function payWithWallet(){
  if(!activePackage)return;
+ hydrateBuyerInfo();
  if(!buyer.id||buyer.id==="Unknown"){
-  showToast("⚠️ Open inside Telegram Mini App to use Wallet!");
+  showToast("⚠️ Tap TG ID badge or open inside Telegram to use Wallet!");
   return;
  }
 
@@ -1478,7 +1557,7 @@ async function payWithWallet(){
 
   pendingUpiSession={orderId};
   btn.disabled=false;
-  proceedToDM("","Wallet Balance 💵");
+  proceedToDM("","Wallet Balance 💵",true);
  }catch(err){
   btn.disabled=false;
   label.innerText=`Pay ₹${activePackage.amount} from Wallet`;
@@ -1495,6 +1574,8 @@ function proceedToDM(verifiedUtr="",customPaymentLabel="",autoOpenDm=true){
   closeCheckout();
   return null;
  }
+
+ hydrateBuyerInfo();
 
  const server=document.getElementById("serverSelect").value;
  const paymentLabel=getPaymentLabel(customPaymentLabel);
@@ -1530,12 +1611,10 @@ function proceedToDM(verifiedUtr="",customPaymentLabel="",autoOpenDm=true){
  pendingUpiSession=null;
 
  const promptText=buildOrderDmText(newOrder);
- if(navigator.clipboard&&navigator.clipboard.writeText){
-  navigator.clipboard.writeText(promptText).catch(()=>{});
- }
+ copyTextSafe(promptText);
 
  if(autoOpenDm){
-  sendPromptToAdminDm(newOrder);
+  openDmWithText(promptText);
  }
  return newOrder;
 }
@@ -1675,7 +1754,7 @@ function launchDirectUpi(e,appType){
 }
 
 function copyMerchantUpi(){
- navigator.clipboard.writeText(MERCHANT_UPI_ID);
+ copyTextSafe(MERCHANT_UPI_ID);
  const btn=document.getElementById("upiCopyBtn");
  btn.innerText="COPIED!";
  if(tg&&tg.HapticFeedback)tg.HapticFeedback.notificationOccurred("success");
@@ -1799,17 +1878,13 @@ async function verifyAndSuccessUpi(){
       pendingUpiSession=null;
       document.getElementById("upiCheckoutModal").classList.remove("show");
       showToast(`✅ ₹${credited} Added to Wallet!`);
-     },1600);
+     },1500);
     }else{
      const created=proceedToDM("","UPI (IND 🇮🇳)",false);
      document.getElementById("upiSuccessSummary").innerText=`₹${expectedAmt} Verified • Order #${created.id}`;
      document.getElementById("manualDmOpenBtn").style.display="flex";
      document.getElementById("upiSuccessView").style.display="block";
-
-     setTimeout(()=>{
-      document.getElementById("upiCheckoutModal").classList.remove("show");
-      sendPromptToAdminDm(created);
-     },1400);
+     openDmWithText(buildOrderDmText(created));
     }
     return;
    }
@@ -1889,7 +1964,6 @@ setInterval(()=>{
   renderMyPlans();
  }
 },30000);
-
 </script>
 </body>
 </html>
