@@ -1640,19 +1640,6 @@ async function pasteUtrFromClipboard(){
  showToast("📋 Tap inside box & press Paste");
 }
 
-function getUsedUtrs(){
- try{return JSON.parse(localStorage.getItem("maxff_used_utrs")||"[]")}
- catch(e){return []}
-}
-
-function saveUsedUtr(utr){
- const list=getUsedUtrs();
- if(!list.includes(utr)){
-  list.push(utr);
-  localStorage.setItem("maxff_used_utrs",JSON.stringify(list));
- }
-}
-
 function stopCheckingTimers(){
  clearInterval(checkingTimerInterval);
  clearInterval(checkingPollInterval);
@@ -1666,7 +1653,9 @@ function cancelCheckingAndReject(){
  rejectUpiPayment("Verification cancelled by buyer");
 }
 
-/* 60-SECOND CHECKING PAYMENT TIMER + REAL FAMPAY GMAIL SYNC VERIFICATION */
+/* 60-SECOND CHECKING PAYMENT TIMER + REAL FAMPAY GMAIL SYNC VERIFICATION
+   - Unused UTRs remain valid and reusable for a matching-amount purchase/top-up
+   - Already-used UTRs fail instantly */
 async function verifyAndSuccessUpi(){
  if(!pendingUpiSession)return;
 
@@ -1677,11 +1666,6 @@ async function verifyAndSuccessUpi(){
  if(!/^\d{12}$/.test(utr)){
   if(tg&&tg.HapticFeedback)tg.HapticFeedback.notificationOccurred("error");
   showToast("⚠️ Enter valid 12-digit UPI UTR number!");
-  return;
- }
-
- if(getUsedUtrs().includes(utr)){
-  rejectUpiPayment("Duplicate UTR detected! Payment rejected.");
   return;
  }
 
@@ -1707,7 +1691,7 @@ async function verifyAndSuccessUpi(){
   if(rem<=0&&!isFinished){
    isFinished=true;
    stopCheckingTimers();
-   rejectUpiPayment("Payment not received in FamPay within 60s. Fake or unreceived UTR rejected.");
+   rejectUpiPayment("UTR not found yet. You can try again with the same amount.");
   }
  }
 
@@ -1731,7 +1715,6 @@ async function verifyAndSuccessUpi(){
     isFinished=true;
     stopCheckingTimers();
     clearInterval(upiCountdownInterval);
-    saveUsedUtr(utr);
 
     if(tg&&tg.HapticFeedback)tg.HapticFeedback.notificationOccurred("success");
 
@@ -1764,8 +1747,18 @@ async function verifyAndSuccessUpi(){
    }
 
    const reason=(data&&(data.error||data.reason))?(data.error||data.reason):"Payment not found";
-   const waitingForSync=reason.toLowerCase().includes("not found");
+   const lowerReason=reason.toLowerCase();
 
+   // Instant fail if UTR is already used
+   if(data?.instantFail===true||lowerReason.includes("already used")||lowerReason.includes("already been used")){
+    isFinished=true;
+    stopCheckingTimers();
+    rejectUpiPayment("UTR already used! Payment failed.");
+    return;
+   }
+
+   // Wait & retry while UTR hasn't synced yet; reject immediately for amount mismatch or invalid format
+   const waitingForSync=lowerReason.includes("not found");
    if(!waitingForSync){
     isFinished=true;
     stopCheckingTimers();
