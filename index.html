@@ -390,6 +390,7 @@ select option {background:#111320;color:#fff}
   border-radius:14px;padding:13px;font-size:14.5px;font-weight:900;
   margin-bottom:8px;cursor:pointer;
 }
+.upi-app-btn:active {transform:scale(.98)}
 .direct-apps-grid {
   display:grid;
   grid-template-columns:repeat(4,1fr);
@@ -420,14 +421,37 @@ select option {background:#111320;color:#fff}
   display:block;font-size:10.5px;font-weight:800;
   color:var(--cyan);letter-spacing:.05em;margin-bottom:7px;
 }
-.utr-input-field {
-  width:100%;background:#07080f;
+.utr-input-wrap {
+  display:flex;
+  align-items:center;
+  background:#07080f;
   border:1px solid rgba(157,78,221,.4);
-  border-radius:12px;padding:12px 13px;
-  color:#fff;font-size:15px;font-weight:800;
-  letter-spacing:1.2px;outline:none;margin-bottom:10px;
+  border-radius:12px;
+  padding-right:8px;
+  margin-bottom:10px;
 }
-.utr-input-field:focus {border-color:var(--cyan)}
+.utr-input-wrap:focus-within {border-color:var(--cyan)}
+.utr-input-field {
+  flex:1;
+  min-width:0;
+  background:transparent;
+  border:none;
+  padding:12px 13px;
+  color:#fff;font-size:15px;font-weight:800;
+  letter-spacing:1.2px;outline:none;
+}
+.paste-utr-btn {
+  background:rgba(157,78,221,.22);
+  border:1px solid rgba(157,78,221,.45);
+  color:#e9d5ff;
+  border-radius:8px;
+  padding:6px 10px;
+  font-size:10.5px;
+  font-weight:800;
+  cursor:pointer;
+  flex-shrink:0;
+}
+.paste-utr-btn:active {transform:scale(.95)}
 .upi-action-grid {
   display:grid;grid-template-columns:1fr 1.6fr;gap:9px;
 }
@@ -680,20 +704,23 @@ select option {background:#111320;color:#fff}
         <button class="vpa-copy-btn" id="upiCopyBtn" onclick="copyMerchantUpi()">COPY UPI</button>
       </div>
 
-      <button type="button" id="directUpiAppBtn" class="upi-app-btn" onclick="launchDirectUpi(event, 'default')">
+      <button type="button" id="directUpiAppBtn" class="upi-app-btn" onclick="launchDirectUpi('default')">
         Pay ₹25 with UPI App ⚡
       </button>
 
       <div class="direct-apps-grid">
-        <button type="button" class="app-chip-btn" id="btnGpay" onclick="launchDirectUpi(event, 'gpay')">GPay</button>
-        <button type="button" class="app-chip-btn" id="btnPhonepe" onclick="launchDirectUpi(event, 'phonepe')">PhonePe</button>
-        <button type="button" class="app-chip-btn" id="btnPaytm" onclick="launchDirectUpi(event, 'paytm')">Paytm</button>
-        <button type="button" class="app-chip-btn" id="btnBhim" onclick="launchDirectUpi(event, 'bhim')">BHIM</button>
+        <button type="button" class="app-chip-btn" id="btnGpay" onclick="launchDirectUpi('gpay')">GPay</button>
+        <button type="button" class="app-chip-btn" id="btnPhonepe" onclick="launchDirectUpi('phonepe')">PhonePe</button>
+        <button type="button" class="app-chip-btn" id="btnPaytm" onclick="launchDirectUpi('paytm')">Paytm</button>
+        <button type="button" class="app-chip-btn" id="btnBhim" onclick="launchDirectUpi('bhim')">BHIM</button>
       </div>
 
       <div class="utr-verify-section">
         <label>ENTER 12-DIGIT UPI UTR / REF NO. AFTER PAYMENT</label>
-        <input type="tel" maxlength="12" id="upiUtrField" class="utr-input-field" placeholder="e.g. 432910482910" oninput="sanitizeUtrInput()">
+        <div class="utr-input-wrap">
+          <input type="tel" maxlength="12" id="upiUtrField" class="utr-input-field" placeholder="e.g. 432910482910" oninput="sanitizeUtrInput()">
+          <button type="button" class="paste-utr-btn" id="pasteUtrBtn" onclick="pasteUtrFromClipboard()">PASTE</button>
+        </div>
         <div class="upi-action-grid">
           <button class="reject-btn" onclick="rejectUpiPayment('Payment rejected')">✕ Reject</button>
           <button class="verify-pay-btn" id="verifyPayBtn" onclick="verifyAndSuccessUpi()">✓ Confirm Paid</button>
@@ -1253,7 +1280,7 @@ function openUpiCheckout(){
  const orderId="FF"+Math.floor(100000+Math.random()*900000);
  const amountFixed=Number(activePackage.amount).toFixed(2);
  const server=document.getElementById("serverSelect").value;
- const queryStr=`pa=${encodeURIComponent(MERCHANT_UPI_ID)}&pn=${encodeURIComponent(MERCHANT_UPI_NAME)}&tr=${orderId}&tn=${orderId}&am=${amountFixed}&cu=INR`;
+ const queryStr=`pa=${MERCHANT_UPI_ID}&pn=${encodeURIComponent(MERCHANT_UPI_NAME)}&tr=${orderId}&tn=${orderId}&am=${amountFixed}&cu=INR`;
 
  pendingUpiSession={
   orderId,
@@ -1290,29 +1317,38 @@ function openUpiCheckout(){
  document.getElementById("upiCheckoutModal").classList.add("show");
 }
 
-function launchDirectUpi(e,appType){
- if(e)e.preventDefault();
+function triggerDeepLink(url){
+ const a=document.createElement("a");
+ a.href=url;
+ a.style.display="none";
+ document.body.appendChild(a);
+ a.click();
+ document.body.removeChild(a);
+}
+
+function launchDirectUpi(appType){
  if(!pendingUpiSession)return;
  const q=pendingUpiSession.queryStr;
  const isIOS=/iPhone|iPad|iPod/i.test(navigator.userAgent);
 
  const schemes={
   default:isIOS?`paytmmp://pay?${q}`:`upi://pay?${q}`,
-  gpay:`gpay://upi/pay?${q}`,
+  gpay:`tez://upi/pay?${q}`,
   phonepe:`phonepe://pay?${q}`,
   paytm:`paytmmp://pay?${q}`,
   bhim:isIOS?`bhim://upi/pay?${q}`:`upi://pay?${q}`
  };
 
  const targetUrl=schemes[appType]||schemes.default;
+ triggerDeepLink(targetUrl);
 
- if(tg&&typeof tg.openLink==="function"){
-  try{
-   tg.openLink(targetUrl);
-   return;
-  }catch(err){}
+ if(isIOS&&appType==="default"){
+  setTimeout(()=>{
+   if(!document.hidden){
+    showToast("📲 Tap Paytm / GPay / PhonePe below or scan QR");
+   }
+  },900);
  }
- window.location.href=targetUrl;
 }
 
 function copyMerchantUpi(){
@@ -1326,6 +1362,29 @@ function copyMerchantUpi(){
 function sanitizeUtrInput(){
  const el=document.getElementById("upiUtrField");
  el.value=el.value.replace(/\D/g,"").slice(0,12);
+}
+
+async function pasteUtrFromClipboard(){
+ const input=document.getElementById("upiUtrField");
+ const btn=document.getElementById("pasteUtrBtn");
+ try{
+  if(navigator.clipboard&&navigator.clipboard.readText){
+   const text=await navigator.clipboard.readText();
+   const match=(text||"").match(/\d{12}/);
+   const digits=(match?match[0]:(text||"").replace(/\D/g,"")).slice(0,12);
+   if(digits){
+    input.value=digits;
+    btn.innerText="PASTED!";
+    if(tg.HapticFeedback)tg.HapticFeedback.notificationOccurred("success");
+    setTimeout(()=>btn.innerText="PASTE",1800);
+    return;
+   }
+   showToast("⚠️ No 12-digit UTR found in clipboard");
+   return;
+  }
+ }catch(err){}
+ input.focus();
+ showToast("📋 Tap inside box & press Paste");
 }
 
 function getUsedUtrs(){
@@ -1435,7 +1494,6 @@ async function verifyAndSuccessUpi(){
    const reason=(data&&data.reason)?data.reason:"Payment not found";
    const waitingForSync=reason.toLowerCase().includes("not found");
 
-   /* If wrong amount or already used on server, fail immediately; if not found yet, keep checking until 60s ends */
    if(!waitingForSync){
     isFinished=true;
     stopCheckingTimers();
@@ -1449,7 +1507,6 @@ async function verifyAndSuccessUpi(){
  updateCheckClock();
  checkingTimerInterval=setInterval(updateCheckClock,1000);
 
- /* Run first check immediately, then every 5 seconds until 60s finishes */
  checkWorkerOnce();
  checkingPollInterval=setInterval(checkWorkerOnce,5000);
 }
