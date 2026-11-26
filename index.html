@@ -669,7 +669,7 @@ select option {background:#111320;color:#fff}
 
   <div id="tab-plans" class="tab-panel">
     <div class="section-label">
-      <span>My Plans</span><b>Starts Next Day</b>
+      <span>My Plans</span><b>Starts Next Day @ 4 AM</b>
     </div>
     <div id="myPlansContainer"></div>
   </div>
@@ -732,7 +732,7 @@ select option {background:#111320;color:#fff}
     <div class="receipt-box">
       <div class="receipt-row"><span>Package</span><strong id="recPlan"></strong></div>
       <div class="receipt-row"><span>Daily Speed</span><strong>220 Likes / Day</strong></div>
-      <div class="receipt-row"><span>Schedule</span><strong>Starts Tomorrow</strong></div>
+      <div class="receipt-row"><span>Schedule</span><strong>Next Day @ 4:00 AM</strong></div>
       <div class="receipt-row"><span>Server</span><strong id="recServer"></strong></div>
       <div class="receipt-row"><span>Payment</span><strong id="recPayment"></strong></div>
       <div class="receipt-row total"><span>Total Payable</span><strong id="recPrice"></strong></div>
@@ -838,7 +838,7 @@ select option {background:#111320;color:#fff}
         Verified via FamPay UPI
       </p>
       <button class="dm-btn" id="manualDmOpenBtn" onclick="openSavedOrderDm()">
-        Send Order Prompt to @vijxzz ⚡
+        Send Plan Details to @vijxzz ⚡
       </button>
     </div>
 
@@ -1038,7 +1038,7 @@ function normalizeFfOrderId(rawId){
 function getQuotedApproveCommand(order){
  hydrateBuyerInfo();
  const ffId=normalizeFfOrderId(order.id);
- return `'/approve ${buyer.id} ${order.days} ${ffId}'`;
+ return `\`/approve ${buyer.id} ${order.days} ${ffId}\``;
 }
 
 async function copyApprovalCommandById(orderId){
@@ -1096,54 +1096,37 @@ function parseDMY(dateStr){
  return new Date(yyyy,mm-1,dd,0,0,0,0);
 }
 
+function getStartOfDayAt4AM(dateStr){
+ const parsed=parseDMY(dateStr);
+ if(!parsed)return null;
+ return new Date(parsed.getFullYear(),parsed.getMonth(),parsed.getDate(),4,0,0,0);
+}
+
+/* NEXT DAY 4:00 AM DAILY +220 LIKES DROP LOGIC */
 function getPlanProgress(plan){
  const totalLikes=plan.days*220;
-
- if(plan.status==="pending"){
-  return {
-   statusLabel:"PENDING APPROVAL",
-   badgeClass:"pending",
-   percent:5,
-   completedDays:0,
-   deliveredLikes:0,
-   totalLikes,
-   rightText:`Waiting Admin • Starts ${plan.startDate||getNextDayString(1)}`
-  };
- }
-
- const startObj=parseDMY(plan.startDate);
+ const start4AM=getStartOfDayAt4AM(plan.startDate);
  const now=new Date();
 
- if(!startObj){
+ if(!start4AM||now<start4AM){
   return {
-   statusLabel:"SCHEDULED • 0%",
+   statusLabel:"STARTS 4:00 AM • 0%",
    badgeClass:"pending",
    percent:0,
    completedDays:0,
    deliveredLikes:0,
    totalLikes,
-   rightText:`0 / ${totalLikes.toLocaleString()} Likes`
+   rightText:`0 / ${totalLikes.toLocaleString()} Likes • Starts ${plan.startDate||getNextDayString(1)} @ 4:00 AM`
   };
  }
 
- const startTime=startObj.getTime();
- const elapsedMs=Math.max(0,now.getTime()-startTime);
  const msPerDay=24*60*60*1000;
- const totalPlanMs=plan.days*msPerDay;
+ const elapsedDays=Math.floor((now.getTime()-start4AM.getTime())/msPerDay)+1;
+ const completedDays=Math.min(plan.days,Math.max(0,elapsedDays));
+ const deliveredLikes=completedDays*220;
+ const percent=Number(((completedDays/plan.days)*100).toFixed(1));
 
- if(now<startObj){
-  return {
-   statusLabel:"SCHEDULED • 0%",
-   badgeClass:"pending",
-   percent:0,
-   completedDays:0,
-   deliveredLikes:0,
-   totalLikes,
-   rightText:`0 / ${totalLikes.toLocaleString()} Likes • Starts ${plan.startDate}`
-  };
- }
-
- if(elapsedMs>=totalPlanMs){
+ if(completedDays>=plan.days){
   return {
    statusLabel:"COMPLETED • 100%",
    badgeClass:"completed",
@@ -1151,30 +1134,18 @@ function getPlanProgress(plan){
    completedDays:plan.days,
    deliveredLikes:totalLikes,
    totalLikes,
-   rightText:`Completed (${totalLikes.toLocaleString()} Likes)`
+   rightText:`${totalLikes.toLocaleString()} / ${totalLikes.toLocaleString()} Likes (Done)`
   };
  }
 
- const exactDaysElapsed=elapsedMs/msPerDay;
- const currentDayNumber=Math.min(
-  plan.days,
-  Math.max(1,Math.floor(exactDaysElapsed)+1)
- );
-
- const percent=Number(((elapsedMs/totalPlanMs)*100).toFixed(1));
- const deliveredLikes=Math.min(
-  totalLikes,
-  Math.round((elapsedMs/totalPlanMs)*totalLikes)
- );
-
  return {
-  statusLabel:`ACTIVE • DAY ${currentDayNumber}/${plan.days} (${percent}%)`,
+  statusLabel:`ACTIVE • DAY ${completedDays}/${plan.days} (${percent}%)`,
   badgeClass:"successful",
   percent,
-  completedDays:currentDayNumber,
+  completedDays,
   deliveredLikes,
   totalLikes,
-  rightText:`${deliveredLikes.toLocaleString()} / ${totalLikes.toLocaleString()} Likes`
+  rightText:`${deliveredLikes.toLocaleString()} / ${totalLikes.toLocaleString()} Likes (+220 @ 4:00 AM)`
  };
 }
 
@@ -1277,17 +1248,19 @@ function updateOrderStatus(orderId,newStatus){
 
 let dmLaunchLock=false;
 
-async function openDmWithText(promptText){
- if(dmLaunchLock)return;
+/* PRE-FILLED DM OPENER FOR ALL FLOWS + SILENT CLIPBOARD BACKUP */
+function openDmWithText(promptText){
+ if(!promptText||dmLaunchLock)return;
  dmLaunchLock=true;
  setTimeout(()=>{dmLaunchLock=false;},700);
 
- const copied=await copyTextReliable(promptText);
+ copyTextReliable(promptText);
+
  const encoded=encodeURIComponent(promptText);
  const httpsUrl=`https://t.me/${ADMIN_USERNAME}?text=${encoded}`;
  const nativeUrl=`tg://resolve?domain=${ADMIN_USERNAME}&text=${encoded}`;
 
- showToast(copied?"Prompt copied! Opening @vijxzz...":"Opening @vijxzz DM...");
+ showToast("Opening @vijxzz with message ready — tap Send!");
 
  try{
   if(tg&&typeof tg.openTelegramLink==="function"){
@@ -1323,7 +1296,7 @@ ${toBold("I WANT TO BUY MAX FF AUTOLIKES:")}
 👤 ${toBold("NAME:")} ${toBold(buyer.name)} (${buyer.username})
 🆔 ${toBold("TG ID:")} ${toBold(buyer.id)}
 📦 ${toBold("PLAN:")} ${toBold(dayLabel)} — ${toBold(order.likes+" Likes")} (220/Day)
-📅 ${toBold("STARTS:")} ${toBold(order.startDate)} (Next Day)
+📅 ${toBold("STARTS:")} ${toBold(order.startDate)} (Next Day @ 4:00 AM)
 💰 ${toBold("PRICE:")} ${toBold(order.price)}
 🌍 ${toBold("SERVER:")} ${toBold(order.server)}
 💳 ${toBold("PAYMENT:")} ${toBold(order.payment)}
@@ -1387,34 +1360,37 @@ function renderOrders(){
    </div>
    ${o.status==="pending"?`
     <div class="order-actions">
-     <button class="mini-btn dm" onclick="openOrderDmById('${ffId}')">📩 Open DM Prompt</button>
+     <button class="mini-btn dm" onclick="openOrderDmById('${ffId}')">📩 Send Plan Details</button>
      <button class="mini-btn ok" onclick="copyApprovalCommandById('${ffId}')">📋 Copy Approval</button>
      ${isAdmin?`
       <button class="mini-btn ok" onclick="updateOrderStatus('${o.id}','successful')">✓ Approve</button>
       <button class="mini-btn fail" onclick="updateOrderStatus('${o.id}','failed')">✕ Reject</button>
      `:""}
-    </div>`:""}
+    </div>
+    <p style="font-size:10.5px;font-style:italic;color:var(--muted);margin-top:8px;line-height:1.4;text-align:center;">
+     If your payment or order is not approved yet, kindly tap <b style="color:var(--cyan);font-style:normal;">Send Plan Details</b> to DM <b style="color:#fff;font-style:normal;">@vijxzz</b>.
+    </p>`:""}
   </div>`;
  }).join("");
 }
 
-/* MY PLANS — SHOWS FF ORDER ID ONLY (NO UTR) */
+/* MY PLANS — ONLY APPROVED PLANS (NO PENDING), +220 DAILY AT 4:00 AM */
 function renderMyPlans(){
- const visiblePlans=getOrders().filter(o=>o.status==="successful"||o.status==="pending");
+ const activePlans=getOrders().filter(o=>o.status==="successful");
  const plansEl=document.getElementById("myPlansContainer");
 
- if(visiblePlans.length===0){
+ if(activePlans.length===0){
   plansEl.innerHTML=`
    <div class="empty-state">
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
     <h3>No Active Plan</h3>
-    <p>Once you place an order, your plan &amp; FF Order ID will appear here.</p>
+    <p>Approved plans will appear here and add +220 likes every day at 4:00 AM.</p>
     <button class="action-pill-btn" onclick="document.querySelectorAll('.tab-btn')[0].click()">Get Auto Likes</button>
    </div>`;
   return;
  }
 
- plansEl.innerHTML=visiblePlans.map(p=>{
+ plansEl.innerHTML=activePlans.map(p=>{
   const prog=getPlanProgress(p);
   const ffId=normalizeFfOrderId(p.id);
 
@@ -1440,15 +1416,9 @@ function renderMyPlans(){
     </div>
 
     <div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--muted);">
-     <span>Duration: ${p.days} ${p.days===1?"Day":"Days"} (${prog.percent}%)</span>
+     <span>Progress: ${prog.percent}% (${prog.completedDays}/${p.days} Days)</span>
      <span style="color:#fff;font-weight:600;text-align:right;">${prog.rightText}</span>
     </div>
-
-    ${p.status==="pending"?`
-     <div class="order-actions">
-      <button class="mini-btn dm" onclick="openOrderDmById('${ffId}')">📩 Send #${ffId} to @vijxzz</button>
-      <button class="mini-btn ok" onclick="copyApprovalCommandById('${ffId}')">📋 Copy Approval</button>
-     </div>`:""}
    </div>`;
  }).join("");
 }
