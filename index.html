@@ -821,10 +821,10 @@ select option {background:#111320;color:#fff}
       <h3 style="font-size:19px;font-weight:900;color:#fff;margin-bottom:4px;">Checking Payment...</h3>
       <div class="checking-countdown-pill" id="checkingTimerText">02:00</div>
       <p id="checkingSubText" style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:8px;">
-        Waiting for FamPay payment confirmation mail...<br>Do not close this screen.
+        Verifying your UPI payment UTR...<br>Do not close this screen.
       </p>
       <p style="font-size:11px;color:var(--cyan);opacity:0.9;line-height:1.45;background:rgba(0,245,212,.08);border:1px solid rgba(0,245,212,.22);border-radius:10px;padding:8px 10px;margin-bottom:14px;">
-        Note: UTR sync speed depends on payment mail delivery. As soon as your UTR reaches the data store and the Worker verifies it within 2 minutes, payment succeeds immediately without waiting the full 02:00.
+        Note: Confirmation speed depends on payment alert delivery. As soon as your UTR is verified within 2 minutes, payment succeeds immediately without waiting the full 02:00.
       </p>
       <button class="reject-btn" style="width:100%;" onclick="cancelCheckingAndReject()">✕ Cancel Verification</button>
     </div>
@@ -1816,7 +1816,7 @@ function cancelCheckingAndReject(){
  rejectUpiPayment("Verification cancelled by buyer");
 }
 
-/* 120-SECOND (02:00) CHECKING PAYMENT TIMER + FAST 2s FAMPAY GMAIL SYNC VERIFICATION */
+/* 120-SECOND (02:00) CHECKING PAYMENT TIMER + FAST 2s VERIFICATION */
 async function verifyAndSuccessUpi(){
  if(!pendingUpiSession)return;
 
@@ -1900,7 +1900,6 @@ async function verifyAndSuccessUpi(){
      document.getElementById("upiSuccessSummary").innerText=`₹${expectedAmt} Verified • Order #${created.id}`;
      document.getElementById("manualDmOpenBtn").style.display="flex";
      document.getElementById("upiSuccessView").style.display="block";
-     openDmWithText(buildOrderDmText(created));
     }
     return;
    }
