@@ -669,7 +669,7 @@ select option {background:#111320;color:#fff}
 
   <div id="tab-plans" class="tab-panel">
     <div class="section-label">
-      <span>My Plans</span><b>Starts Next Day @ 4 AM</b>
+      <span>My Plans</span><b>Next Day</b>
     </div>
     <div id="myPlansContainer"></div>
   </div>
@@ -732,7 +732,7 @@ select option {background:#111320;color:#fff}
     <div class="receipt-box">
       <div class="receipt-row"><span>Package</span><strong id="recPlan"></strong></div>
       <div class="receipt-row"><span>Daily Speed</span><strong>220 Likes / Day</strong></div>
-      <div class="receipt-row"><span>Schedule</span><strong>Next Day @ 4:00 AM</strong></div>
+      <div class="receipt-row"><span>Schedule</span><strong>Next Day</strong></div>
       <div class="receipt-row"><span>Server</span><strong id="recServer"></strong></div>
       <div class="receipt-row"><span>Payment</span><strong id="recPayment"></strong></div>
       <div class="receipt-row total"><span>Total Payable</span><strong id="recPrice"></strong></div>
@@ -1102,7 +1102,7 @@ function getStartOfDayAt4AM(dateStr){
  return new Date(parsed.getFullYear(),parsed.getMonth(),parsed.getDate(),4,0,0,0);
 }
 
-/* NEXT DAY 4:00 AM DAILY +220 LIKES DROP LOGIC */
+/* DAILY +220 LIKES DROP LOGIC */
 function getPlanProgress(plan){
  const totalLikes=plan.days*220;
  const start4AM=getStartOfDayAt4AM(plan.startDate);
@@ -1110,13 +1110,13 @@ function getPlanProgress(plan){
 
  if(!start4AM||now<start4AM){
   return {
-   statusLabel:"STARTS 4:00 AM • 0%",
+   statusLabel:"NEXT DAY • 0%",
    badgeClass:"pending",
    percent:0,
    completedDays:0,
    deliveredLikes:0,
    totalLikes,
-   rightText:`0 / ${totalLikes.toLocaleString()} Likes • Starts ${plan.startDate||getNextDayString(1)} @ 4:00 AM`
+   rightText:`0/${totalLikes.toLocaleString()} Likes`
   };
  }
 
@@ -1134,7 +1134,7 @@ function getPlanProgress(plan){
    completedDays:plan.days,
    deliveredLikes:totalLikes,
    totalLikes,
-   rightText:`${totalLikes.toLocaleString()} / ${totalLikes.toLocaleString()} Likes (Done)`
+   rightText:`${totalLikes.toLocaleString()}/${totalLikes.toLocaleString()} Likes (Done)`
   };
  }
 
@@ -1145,7 +1145,7 @@ function getPlanProgress(plan){
   completedDays,
   deliveredLikes,
   totalLikes,
-  rightText:`${deliveredLikes.toLocaleString()} / ${totalLikes.toLocaleString()} Likes (+220 @ 4:00 AM)`
+  rightText:`${deliveredLikes.toLocaleString()}/${totalLikes.toLocaleString()} Likes`
  };
 }
 
@@ -1296,7 +1296,7 @@ ${toBold("I WANT TO BUY MAX FF AUTOLIKES:")}
 👤 ${toBold("NAME:")} ${toBold(buyer.name)} (${buyer.username})
 🆔 ${toBold("TG ID:")} ${toBold(buyer.id)}
 📦 ${toBold("PLAN:")} ${toBold(dayLabel)} — ${toBold(order.likes+" Likes")} (220/Day)
-📅 ${toBold("STARTS:")} ${toBold(order.startDate)} (Next Day @ 4:00 AM)
+📅 ${toBold("STARTS:")} ${toBold(order.startDate)} (Next Day)
 💰 ${toBold("PRICE:")} ${toBold(order.price)}
 🌍 ${toBold("SERVER:")} ${toBold(order.server)}
 💳 ${toBold("PAYMENT:")} ${toBold(order.payment)}
@@ -1374,7 +1374,7 @@ function renderOrders(){
  }).join("");
 }
 
-/* MY PLANS — ONLY APPROVED PLANS (NO PENDING), +220 DAILY AT 4:00 AM */
+/* MY PLANS — ONLY APPROVED PLANS (NO PENDING), +220 DAILY */
 function renderMyPlans(){
  const activePlans=getOrders().filter(o=>o.status==="successful");
  const plansEl=document.getElementById("myPlansContainer");
@@ -1384,7 +1384,7 @@ function renderMyPlans(){
    <div class="empty-state">
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
     <h3>No Active Plan</h3>
-    <p>Approved plans will appear here and add +220 likes every day at 4:00 AM.</p>
+    <p>Approved plans will appear here and add +220 likes every day.</p>
     <button class="action-pill-btn" onclick="document.querySelectorAll('.tab-btn')[0].click()">Get Auto Likes</button>
    </div>`;
   return;
@@ -1415,9 +1415,9 @@ function renderMyPlans(){
      </div>
     </div>
 
-    <div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--muted);">
-     <span>Progress: ${prog.percent}% (${prog.completedDays}/${p.days} Days)</span>
-     <span style="color:#fff;font-weight:600;text-align:right;">${prog.rightText}</span>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11.5px;color:var(--muted);">
+     <span style="font-weight:700;color:var(--cyan);">${prog.percent}%</span>
+     <span style="color:#fff;font-weight:800;text-align:right;">${prog.rightText}</span>
     </div>
    </div>`;
  }).join("");
