@@ -819,9 +819,12 @@ select option {background:#111320;color:#fff}
     <div id="upiCheckingView" class="status-result-screen" style="display:none;">
       <div class="checking-spinner"></div>
       <h3 style="font-size:19px;font-weight:900;color:#fff;margin-bottom:4px;">Checking Payment...</h3>
-      <div class="checking-countdown-pill" id="checkingTimerText">01:00</div>
-      <p id="checkingSubText" style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:14px;">
+      <div class="checking-countdown-pill" id="checkingTimerText">02:00</div>
+      <p id="checkingSubText" style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:8px;">
         Waiting for FamPay payment confirmation mail...<br>Do not close this screen.
+      </p>
+      <p style="font-size:11px;color:var(--cyan);opacity:0.9;line-height:1.45;background:rgba(0,245,212,.08);border:1px solid rgba(0,245,212,.22);border-radius:10px;padding:8px 10px;margin-bottom:14px;">
+        Note: UTR sync speed depends on payment mail delivery. As soon as your UTR reaches the data store and the Worker verifies it within 2 minutes, payment succeeds immediately without waiting the full 02:00.
       </p>
       <button class="reject-btn" style="width:100%;" onclick="cancelCheckingAndReject()">✕ Cancel Verification</button>
     </div>
@@ -1813,7 +1816,7 @@ function cancelCheckingAndReject(){
  rejectUpiPayment("Verification cancelled by buyer");
 }
 
-/* 60-SECOND CHECKING PAYMENT TIMER + REAL FAMPAY GMAIL SYNC VERIFICATION */
+/* 120-SECOND (02:00) CHECKING PAYMENT TIMER + FAST 2s FAMPAY GMAIL SYNC VERIFICATION */
 async function verifyAndSuccessUpi(){
  if(!pendingUpiSession)return;
 
@@ -1835,14 +1838,16 @@ async function verifyAndSuccessUpi(){
  document.getElementById("upiRejectedView").style.display="none";
  document.getElementById("upiCheckingView").style.display="block";
 
- const checkDurationSec=60;
+ const checkDurationSec=120;
  const checkEndsAt=Date.now()+(checkDurationSec*1000);
  let isFinished=false;
 
  function updateCheckClock(){
   const rem=Math.max(0,Math.ceil((checkEndsAt-Date.now())/1000));
-  const mm=String(Math.floor(rem/60)).padStart(2,"0");
-  const ss=String(rem%60).padStart(2,"0");
+  const mins=Math.floor(rem/60);
+  const secs=rem%60;
+  const mm=String(mins).padStart(2,"0");
+  const ss=String(secs).padStart(2,"0");
   document.getElementById("checkingTimerText").innerText=`${mm}:${ss}`;
 
   if(rem<=0&&!isFinished){
@@ -1923,7 +1928,7 @@ async function verifyAndSuccessUpi(){
  checkingTimerInterval=setInterval(updateCheckClock,1000);
 
  checkWorkerOnce();
- checkingPollInterval=setInterval(checkWorkerOnce,5000);
+ checkingPollInterval=setInterval(checkWorkerOnce,2000);
 }
 
 function rejectUpiPayment(reasonText="Payment rejected"){
