@@ -1038,10 +1038,11 @@ function normalizeFfOrderId(rawId){
  return "FF"+Math.floor(100000+Math.random()*900000);
 }
 
+/* MONOSPACE ONE-TAP COPY FORMAT IN TELEGRAM (`...`) */
 function getApproveCommand(order){
  hydrateBuyerInfo();
  const ffId=normalizeFfOrderId(order.id);
- return `/approve ${buyer.id} ${order.days} ${ffId}`;
+ return `\`/approve ${buyer.id} ${order.days} ${ffId}\``;
 }
 
 async function copyApprovalCommandById(orderId){
@@ -1251,7 +1252,7 @@ function updateOrderStatus(orderId,newStatus){
 
 let dmLaunchLock=false;
 
-/* PRE-FILLED DM OPENER FOR ALL FLOWS (iOS & ANDROID SAFE) */
+/* PRE-FILLED DM OPENER FOR ALL FLOWS (TELEGRAM NATIVE PRE-FILL + CLIPBOARD BACKUP) */
 function openDmWithText(promptText){
  if(!promptText||dmLaunchLock)return;
  dmLaunchLock=true;
@@ -1260,35 +1261,28 @@ function openDmWithText(promptText){
  copyTextReliable(promptText);
 
  const encoded=encodeURIComponent(promptText);
- const nativeUrl=`tg://resolve?domain=${ADMIN_USERNAME}&text=${encoded}`;
  const httpsUrl=`https://t.me/${ADMIN_USERNAME}?text=${encoded}`;
+ const nativeUrl=`tg://resolve?domain=${ADMIN_USERNAME}&text=${encoded}`;
 
  showToast("Opening @vijxzz with message pre-filled!");
 
  try{
-  const a=document.createElement("a");
-  a.href=nativeUrl;
-  a.style.display="none";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
- }catch(e){
-  try{
-   window.location.href=nativeUrl;
-  }catch(err){}
- }
-
- setTimeout(()=>{
-  if(!document.hidden){
-   try{
-    if(tg&&typeof tg.openTelegramLink==="function"){
-     tg.openTelegramLink(httpsUrl);
-     return;
-    }
-   }catch(e){}
-   window.open(httpsUrl,"_blank","noopener,noreferrer");
+  if(tg&&typeof tg.openTelegramLink==="function"){
+   tg.openTelegramLink(httpsUrl);
+   return;
   }
- },350);
+ }catch(e){}
+
+ try{
+  window.location.href=nativeUrl;
+  setTimeout(()=>{
+   if(!document.hidden){
+    window.open(httpsUrl,"_blank","noopener,noreferrer");
+   }
+  },300);
+ }catch(e){
+  window.open(httpsUrl,"_blank","noopener,noreferrer");
+ }
 }
 
 function buildOrderDmText(order){
@@ -1334,7 +1328,15 @@ function openOrderDmById(orderId){
 
 let lastCreatedOrder=null;
 
+/* CLOSE PAYMENT SUCCESS POPUP, RETURN TO STORE HOME PAGE, AND OPEN PRE-FILLED DM */
 function openSavedOrderDm(){
+ stopCheckingTimers();
+ clearInterval(upiCountdownInterval);
+ pendingUpiSession=null;
+ document.getElementById("upiCheckoutModal").classList.remove("show");
+ const storeTabBtn=document.querySelectorAll(".tab-btn")[0];
+ if(storeTabBtn)switchTab("store",storeTabBtn);
+
  if(lastCreatedOrder){
   sendPromptToAdminDm(lastCreatedOrder);
  }
