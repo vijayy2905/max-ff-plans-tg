@@ -837,7 +837,7 @@ select option {background:#111320;color:#fff}
         </svg>
       </div>
       <h3 style="font-size:20px;font-weight:900;color:#34d399;margin-bottom:6px;">Payment Successful!</h3>
-      <p id="upiSuccessSummary" style="font-size:12.5px;color:#e2e8f0;line-height:1.5;margin-bottom:12px;">
+      <p id="upiSuccessSummary" style="font-size:12.5px;color:#e2e8f0;line-height:1.5;margin-bottom:14px;">
         Verified via FamPay UPI
       </p>
       <button class="dm-btn" id="manualDmOpenBtn" onclick="openSavedOrderDm()">
@@ -865,7 +865,7 @@ const MERCHANT_UPI_NAME="Vijaymohan R";
 const VERIFY_WORKER_URL="https://max-upi-verify.5dmznv6yfw.workers.dev";
 
 const SVG_ICONS={
-  spark:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83 2.83"/></svg>`,
+  spark:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>`,
   bolt:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
   trend:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`,
   rocket:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/></svg>`,
@@ -1038,21 +1038,21 @@ function normalizeFfOrderId(rawId){
  return "FF"+Math.floor(100000+Math.random()*900000);
 }
 
-function getQuotedApproveCommand(order){
+function getApproveCommand(order){
  hydrateBuyerInfo();
  const ffId=normalizeFfOrderId(order.id);
- return `\`/approve ${buyer.id} ${order.days} ${ffId}\``;
+ return `/approve ${buyer.id} ${order.days} ${ffId}`;
 }
 
 async function copyApprovalCommandById(orderId){
  const found=getOrders().find(o=>normalizeFfOrderId(o.id)===normalizeFfOrderId(orderId));
  if(!found)return;
- const quotedCmd=getQuotedApproveCommand(found);
- const copied=await copyTextReliable(quotedCmd);
+ const cmd=getApproveCommand(found);
+ const copied=await copyTextReliable(cmd);
  if(tg&&tg.HapticFeedback){
   tg.HapticFeedback.notificationOccurred(copied?"success":"warning");
  }
- showToast(copied?`Copied ${quotedCmd}`:"Could not copy command");
+ showToast(copied?`Copied ${cmd}`:"Could not copy command");
 }
 
 function getDemoUsedIds(){
@@ -1251,7 +1251,7 @@ function updateOrderStatus(orderId,newStatus){
 
 let dmLaunchLock=false;
 
-/* PRE-FILLED DM OPENER FOR ALL FLOWS + SILENT CLIPBOARD BACKUP */
+/* PRE-FILLED DM OPENER FOR ALL FLOWS (iOS & ANDROID SAFE) */
 function openDmWithText(promptText){
  if(!promptText||dmLaunchLock)return;
  dmLaunchLock=true;
@@ -1260,54 +1260,66 @@ function openDmWithText(promptText){
  copyTextReliable(promptText);
 
  const encoded=encodeURIComponent(promptText);
- const httpsUrl=`https://t.me/${ADMIN_USERNAME}?text=${encoded}`;
  const nativeUrl=`tg://resolve?domain=${ADMIN_USERNAME}&text=${encoded}`;
+ const httpsUrl=`https://t.me/${ADMIN_USERNAME}?text=${encoded}`;
 
- showToast("Opening @vijxzz with message ready — tap Send!");
-
- try{
-  if(tg&&typeof tg.openTelegramLink==="function"){
-   tg.openTelegramLink(httpsUrl);
-   return;
-  }
- }catch(e){}
+ showToast("Opening @vijxzz with message pre-filled!");
 
  try{
-  window.location.href=nativeUrl;
-  setTimeout(()=>{
-   if(!document.hidden){
-    window.open(httpsUrl,"_blank","noopener,noreferrer");
-   }
-  },300);
+  const a=document.createElement("a");
+  a.href=nativeUrl;
+  a.style.display="none";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
  }catch(e){
-  window.open(httpsUrl,"_blank","noopener,noreferrer");
+  try{
+   window.location.href=nativeUrl;
+  }catch(err){}
  }
+
+ setTimeout(()=>{
+  if(!document.hidden){
+   try{
+    if(tg&&typeof tg.openTelegramLink==="function"){
+     tg.openTelegramLink(httpsUrl);
+     return;
+    }
+   }catch(e){}
+   window.open(httpsUrl,"_blank","noopener,noreferrer");
+  }
+ },350);
 }
 
 function buildOrderDmText(order){
  hydrateBuyerInfo();
  const ffId=normalizeFfOrderId(order.id);
  const dayLabel=`${order.days} ${order.days===1?"Day":"Days"}`;
- const quotedCmd=getQuotedApproveCommand(order);
+ const approveCmd=getApproveCommand(order);
+ const startDateText=order.startDate||getNextDayString(1);
  const timeOnly=order.timeOnly||(order.date?order.date.split(" ").slice(-2).join(" "):new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}));
 
- return `❤️‍🔥 ${toBold("HELLO")} @${ADMIN_USERNAME} 👋
+ const lines=[
+  `❤️‍🔥 ${toBold("HELLO")} @${ADMIN_USERNAME} 👋`,
+  ``,
+  `${toBold("I WANT TO BUY MAX FF AUTOLIKES:")}`,
+  ``,
+  `🧾 ${toBold("ORDER ID:")} #${toBold(ffId)}`,
+  `👤 ${toBold("NAME:")} ${toBold(buyer.name)} (${buyer.username})`,
+  `🆔 ${toBold("TG ID:")} ${toBold(buyer.id)}`,
+  `📦 ${toBold("PLAN:")} ${toBold(dayLabel)} — ${toBold(order.likes+" Likes")} (220/Day)`,
+  `📅 ${toBold("STARTS:")} ${toBold(startDateText)} (Next Day)`,
+  `💰 ${toBold("PRICE:")} ${toBold(order.price)}`,
+  `🌍 ${toBold("SERVER:")} ${toBold(order.server)}`,
+  `💳 ${toBold("PAYMENT:")} ${toBold(order.payment)}`,
+  `🤖 ${toBold("BOT:")} ${BOT_USERNAME}`,
+  `⏰ ${toBold("TIME:")} ${toBold(timeOnly)}`,
+  ``,
+  `⚡ ${toBold("ADMIN COMMAND:")}`,
+  approveCmd
+ ];
 
-${toBold("I WANT TO BUY MAX FF AUTOLIKES:")}
-
-🧾 ${toBold("ORDER ID:")} #${toBold(ffId)}
-👤 ${toBold("NAME:")} ${toBold(buyer.name)} (${buyer.username})
-🆔 ${toBold("TG ID:")} ${toBold(buyer.id)}
-📦 ${toBold("PLAN:")} ${toBold(dayLabel)} — ${toBold(order.likes+" Likes")} (220/Day)
-📅 ${toBold("STARTS:")} ${toBold(order.startDate)} (Next Day)
-💰 ${toBold("PRICE:")} ${toBold(order.price)}
-🌍 ${toBold("SERVER:")} ${toBold(order.server)}
-💳 ${toBold("PAYMENT:")} ${toBold(order.payment)}
-🤖 ${toBold("BOT:")} ${BOT_USERNAME}
-⏰ ${toBold("TIME:")} ${toBold(timeOnly)}
-
-⚡ ${toBold("ADMIN COMMAND:")}
-${quotedCmd}`;
+ return lines.join("\n");
 }
 
 function sendPromptToAdminDm(order){
@@ -1324,7 +1336,6 @@ let lastCreatedOrder=null;
 
 function openSavedOrderDm(){
  if(lastCreatedOrder){
-  document.getElementById("upiCheckoutModal").classList.remove("show");
   sendPromptToAdminDm(lastCreatedOrder);
  }
 }
@@ -1592,7 +1603,8 @@ function proceedToDM(verifiedUtr="",customPaymentLabel="",autoOpenDm=true){
  hydrateBuyerInfo();
 
  const server=document.getElementById("serverSelect").value;
- const paymentLabel=getPaymentLabel(customPaymentLabel);
+ const basePayment=getPaymentLabel(customPaymentLabel);
+ const paymentLabel=verifiedUtr?`UPI (IND 🇮🇳 • UTR: ${verifiedUtr})`:basePayment;
  const formattedPrice=formatPrice(activePackage.amount);
  const now=new Date();
  const timeStr=now.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
@@ -1608,6 +1620,7 @@ function proceedToDM(verifiedUtr="",customPaymentLabel="",autoOpenDm=true){
   price:formattedPrice,
   server:server,
   payment:paymentLabel,
+  utr:verifiedUtr||"",
   status:"pending",
   startDate:nextDay,
   timeOnly:timeStr,
@@ -1896,7 +1909,7 @@ async function verifyAndSuccessUpi(){
       showToast(`✅ ₹${credited} Added to Wallet!`);
      },1500);
     }else{
-     const created=proceedToDM("","UPI (IND 🇮🇳)",false);
+     const created=proceedToDM(utr,`UPI (IND 🇮🇳 • UTR: ${utr})`,false);
      document.getElementById("upiSuccessSummary").innerText=`₹${expectedAmt} Verified • Order #${created.id}`;
      document.getElementById("manualDmOpenBtn").style.display="flex";
      document.getElementById("upiSuccessView").style.display="block";
